@@ -74,48 +74,22 @@ class ImageProcessor(private val context: Context) {
         //val outputSize = 304 * 400 * 2
         // val output = FloatArray(outputSize)
         val output = Array(1) { Array(304) { Array(400) { FloatArray(2) } } }
-        Log.d(TAG, "output var definition end")
 
         Log.d(TAG, "Begin interpreter run")
         // Run inference with the input data.
         interpreter?.run(byteBuffer, output)
         Log.d(TAG, "Interpreter run complete")
 
-        // Post-processing: find the class with the highest probability for each pixel
-        val result = output[0]
-        val prediction = StringBuilder()
-
-        try {
-            for (i in 0 until 304) {
-                for (j in 0 until 400) {
-                    if (i < result.size && j < result[i].size && result[i][j].size == 2) {
-                        val confidenceClass0 = result[i][j][0]    // Class 0 confidence
-                        val confidenceClass1 = result[i][j][1]    // Class 1 confidence
-
-                        prediction.append("($i, $j): Class 0: $confidenceClass0, Class 1: $confidenceClass1\n")
-                    } else {
-                        Log.e(TAG, "Out of bounds at ($i, $j)")
-                    }
-                }
-            }
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            Log.e(TAG, "ArrayIndexOutOfBoundsException: ${e.message}")
-            return "Error: Index out of bounds in output tensor"
-        }
-
-        return prediction.toString()
+        return postProcessOutput(output)
     }
 
 
     private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
-        Log.d(TAG, "Starting convertBitmapToByteBuffer")
 
         // Define the correct input dimensions for the model
         val expectedWidth = 800
         val expectedHeight = 608
 
-        // Log the bitmap's actual dimensions
-        Log.d(TAG, "Bitmap width: ${bitmap.width}, height: ${bitmap.height}")
 
         val byteBuffer = ByteBuffer.allocateDirect(expectedWidth * expectedHeight * 3 * FLOAT_TYPE_SIZE)
         byteBuffer.order(ByteOrder.nativeOrder())
@@ -126,7 +100,6 @@ class ImageProcessor(private val context: Context) {
         val pixels = IntArray(expectedWidth * expectedHeight)
         resizedBitmap.getPixels(pixels, 0, expectedWidth, 0, 0, expectedWidth, expectedHeight)
 
-        Log.d(TAG, "Bitmap pixels fetched. Total pixels: ${pixels.size}")
 
         var pixelCount = 0
         for (pixelValue in pixels) {
@@ -137,18 +110,54 @@ class ImageProcessor(private val context: Context) {
             // Convert RGB to grayscale and normalize pixel value to [0..1].
             val normalizedPixelValue = (r + g + b) / 3.0f / 255.0f
 
-            // Log each pixel value conversion
-            if (pixelCount % 100 == 0) {
-                Log.d(TAG, "Pixel $pixelCount - r: $r, g: $g, b: $b, normalized: $normalizedPixelValue")
-            }
-
             byteBuffer.putFloat(normalizedPixelValue)
             pixelCount++
         }
 
-        Log.d(TAG, "convertBitmapToByteBuffer complete. ByteBuffer size: ${byteBuffer.position()} bytes")
         return byteBuffer
     }
+
+    private fun postProcessOutput(output: Array<Array<Array<FloatArray>>>): String {
+        val builder = StringBuilder()
+
+        // Iterate over the output dimensions and extract the predicted characters
+        for (i in output[0].indices) {
+            for (j in output[0][i].indices) {
+                // Find the most probable class for the current pixel (use the index with the highest probability)
+                val class0Confidence = output[0][i][j][0]  // Confidence for Class 0
+                val class1Confidence = output[0][i][j][1]  // Confidence for Class 1
+
+                // If there are more classes (e.g., characters), add additional checks here
+                // Example: class2Confidence, class3Confidence, etc.
+
+                // Compare the confidence scores and choose the most likely character
+                val predictedClass = if (class0Confidence > class1Confidence) {
+                    0  // Class 0 is the most probable
+                } else {
+                    1  // Class 1 is the most probable
+                }
+
+                // Map the class index to an actual character (this should be based on your model's character set)
+                val predictedChar = mapIndexToCharacter(predictedClass)
+
+                // Append the predicted character to the result
+                builder.append(predictedChar)
+            }
+        }
+
+        return builder.toString()
+    }
+
+
+    private fun mapIndexToCharacter(index: Int): String {
+        val characters = "abcdefghijklmnopqrstuvwxyz " // assuming space is included
+        return if (index in 0 until characters.length) {
+            characters[index].toString()
+        } else {
+            ""  // Return empty string if index is out of range
+        }
+    }
+
 
 
 
