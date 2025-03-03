@@ -31,7 +31,7 @@ class ImageProcessor(private val context: Context) {
         val inputShape = interpreter.getInputTensor(0).shape()
         inputImageWidth = inputShape[1]
         inputImageHeight = inputShape[2]
-        modelInputSize = FLOAT_TYPE_SIZE * inputImageWidth * inputImageHeight * PIXEL_SIZE
+        modelInputSize = FLOAT_TYPE_SIZE * 3 * 608 * 800 // inputs obtained from analyzing tflite file on netron.app
 
         // Finish interpreter initialization
         this.interpreter = interpreter
@@ -53,41 +53,79 @@ class ImageProcessor(private val context: Context) {
     }
 
     fun processImage(bitmap: Bitmap): String {
+        Log.d(TAG, "Starting processImage")
         check(isInitialized) { "TF Lite Interpreter is not initialized yet." }
 
+        Log.d(TAG, "Begin resizing image")
         // Pre-processing: resize the input image to match the model input shape.
         val resizedImage = Bitmap.createScaledBitmap(
             bitmap,
-            inputImageWidth,
-            inputImageHeight,
+            800,
+            608,
             true
         )
+        Log.d(TAG, "Image resize complete")
 
+        Log.d(TAG, "byteBuffer var definition begin")
         val byteBuffer = convertBitmapToByteBuffer(resizedImage)
-        // Define an array to store the model output.
-        val output = Array(1) { FloatArray(OUTPUT_CLASSES_COUNT) }
+        Log.d(TAG, "byteBuffer var definition end")
 
+        // Define the output size based on the model's output shape [1, 304, 400, 2]
+        val outputSize = 304 * 400 * 2
+        val output = FloatArray(outputSize)
+        Log.d(TAG, "output var definition end")
+
+        Log.d(TAG, "Begin interpreter run")
         // Run inference with the input data.
         interpreter?.run(byteBuffer, output)
+        Log.d(TAG, "Interpreter run complete")
 
-        // Post-processing: find the digit that has the highest probability
-        // and return it a human-readable string.
-        val result = output[0]
-        val maxIndex = result.indices.maxByOrNull { result[it] } ?: -1
-        val resultString =
-            "Prediction Result: %d\nConfidence: %2f"
-                .format(maxIndex, result[maxIndex])
+        // Post-processing: find the class with the highest probability for each pixel
+        val prediction = StringBuilder()
 
-        return resultString
+        try {
+            for (i in 0 until 304) {
+                for (j in 0 until 400) {
+                    // Calculate flat index for (i, j, class)
+                    for (classIndex in 0 until 2) {
+                        val idx = (i * 400 + j) * 2 + classIndex
+                        val confidence = output[idx]
+
+                        prediction.append("($i, $j, Class $classIndex): Confidence: $confidence\n")
+                    }
+                }
+            }
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            Log.e(TAG, "ArrayIndexOutOfBoundsException: ${e.message}")
+            return "Error: Index out of bounds in output tensor"
+        }
+
+        return prediction.toString()
     }
 
+
     private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
-        val byteBuffer = ByteBuffer.allocateDirect(modelInputSize)
+        Log.d(TAG, "Starting convertBitmapToByteBuffer")
+
+        // Define the correct input dimensions for the model
+        val expectedWidth = 800
+        val expectedHeight = 608
+
+        // Log the bitmap's actual dimensions
+        Log.d(TAG, "Bitmap width: ${bitmap.width}, height: ${bitmap.height}")
+
+        val byteBuffer = ByteBuffer.allocateDirect(expectedWidth * expectedHeight * 3 * FLOAT_TYPE_SIZE)
         byteBuffer.order(ByteOrder.nativeOrder())
 
-        val pixels = IntArray(inputImageWidth * inputImageHeight)
-        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        // Resize the bitmap to match the model's input size
+        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, expectedWidth, expectedHeight, true)
 
+        val pixels = IntArray(expectedWidth * expectedHeight)
+        resizedBitmap.getPixels(pixels, 0, expectedWidth, 0, 0, expectedWidth, expectedHeight)
+
+        Log.d(TAG, "Bitmap pixels fetched. Total pixels: ${pixels.size}")
+
+        var pixelCount = 0
         for (pixelValue in pixels) {
             val r = (pixelValue shr 16 and 0xFF)
             val g = (pixelValue shr 8 and 0xFF)
@@ -95,11 +133,21 @@ class ImageProcessor(private val context: Context) {
 
             // Convert RGB to grayscale and normalize pixel value to [0..1].
             val normalizedPixelValue = (r + g + b) / 3.0f / 255.0f
+
+            // Log each pixel value conversion
+            if (pixelCount % 100 == 0) {
+                Log.d(TAG, "Pixel $pixelCount - r: $r, g: $g, b: $b, normalized: $normalizedPixelValue")
+            }
+
             byteBuffer.putFloat(normalizedPixelValue)
+            pixelCount++
         }
 
+        Log.d(TAG, "convertBitmapToByteBuffer complete. ByteBuffer size: ${byteBuffer.position()} bytes")
         return byteBuffer
     }
+
+
 
     companion object {
         private const val TAG = "ImageProcessor"
