@@ -71,8 +71,9 @@ class ImageProcessor(private val context: Context) {
         Log.d(TAG, "byteBuffer var definition end")
 
         // Define the output size based on the model's output shape [1, 304, 400, 2]
-        val outputSize = 304 * 400 * 2
-        val output = FloatArray(outputSize)
+        //val outputSize = 304 * 400 * 2
+        // val output = FloatArray(outputSize)
+        val output = Array(1) { Array(304) { Array(400) { FloatArray(2) } } }
         Log.d(TAG, "output var definition end")
 
         Log.d(TAG, "Begin interpreter run")
@@ -81,17 +82,19 @@ class ImageProcessor(private val context: Context) {
         Log.d(TAG, "Interpreter run complete")
 
         // Post-processing: find the class with the highest probability for each pixel
+        val result = output[0]
         val prediction = StringBuilder()
 
         try {
             for (i in 0 until 304) {
                 for (j in 0 until 400) {
-                    // Calculate flat index for (i, j, class)
-                    for (classIndex in 0 until 2) {
-                        val idx = (i * 400 + j) * 2 + classIndex
-                        val confidence = output[idx]
+                    if (i < result.size && j < result[i].size && result[i][j].size == 2) {
+                        val confidenceClass0 = result[i][j][0]    // Class 0 confidence
+                        val confidenceClass1 = result[i][j][1]    // Class 1 confidence
 
-                        prediction.append("($i, $j, Class $classIndex): Confidence: $confidence\n")
+                        prediction.append("($i, $j): Class 0: $confidenceClass0, Class 1: $confidenceClass1\n")
+                    } else {
+                        Log.e(TAG, "Out of bounds at ($i, $j)")
                     }
                 }
             }
