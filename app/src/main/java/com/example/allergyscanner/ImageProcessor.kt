@@ -566,10 +566,8 @@ class ImageProcessor(private val context: Context) {
      * Processes recognizer output to extract text using CTC decoding.
      */
     private fun processRecognizerOutput(outputBuffer: ByteBuffer): String {
-        // Get output shape
+        // Get output shape from recognizer (assumed [batch, sequence_length, num_classes])
         val outputShape = recognizerInterpreter!!.getOutputTensor(0).shape()
-
-        // EasyOCR typically uses CTC decoding with output shape [batch, sequence_length, num_classes]
         val sequenceLength = outputShape[1]
         val numClasses = outputShape[2]
 
@@ -581,48 +579,57 @@ class ImageProcessor(private val context: Context) {
             }
         }
 
-        // Extended character set for EasyOCR, including uppercase, common symbols
-        val charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+        // Extended character set for EasyOCR (does NOT include a blank token)
+        // Assume that index 0 is reserved as the blank.
+        val charset = "0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-        // CTC decoding with improved confidence threshold
+        // CTC decoding with a threshold; treat index 0 as blank.
         val result = StringBuilder()
-        var previousClass = -1
+        var previousIndex = 0 // Start with blank
 
         for (timestep in probs) {
-            // Find index with maximum probability
-            val maxIndex = timestep.indices.maxByOrNull { timestep[it] } ?: continue
-            val maxProb = timestep[maxIndex]
+            // Apply softmax to convert raw logits to probabilities
+            val probsAtTimestep = softmax(timestep)
 
-            // Log top predictions for debugging
-            val topIndices = timestep.indices
-                .sortedByDescending { timestep[it] }
-                .take(3)
+            // Find the index with the maximum probability for this timestep
+            val maxIndex = probsAtTimestep.indices.maxByOrNull { probsAtTimestep[it] } ?: continue
+            val maxProb = probsAtTimestep[maxIndex]
+            //Log.d(TAG, "Max probability at this timestep: $maxProb")
 
-            val topPredictions = topIndices.joinToString(", ") {
-                val char = if (it < charset.length) "'" + charset[it] + "'" else "blank"
-                "$char (${timestep[it]})"
+            // If the max index is 0, it's blank; skip it.
+            if (maxIndex == 0) {
+                previousIndex = maxIndex
+                continue
             }
 
-            Log.d(TAG, "Timestep prediction: $topPredictions")
-
-            // Improved CTC decoding: lower threshold (0.2f) and better handling of spaces
-            if (maxProb > 0.2f && maxIndex < charset.length) {
-                // Apply CTC decoding rules
-                if (maxIndex != previousClass) {
-                    // Different from previous prediction (new character)
-                    result.append(charset[maxIndex])
-                } else if (maxIndex == previousClass && result.isNotEmpty() && result.last() != charset[maxIndex]) {
-                    // Repeated character (like "ll" in "hello")
-                    result.append(charset[maxIndex])
+            // Only consider predictions above the threshold
+            if (maxProb > 0.1) {
+                // Only append if this timestep's prediction is different from the previous one
+                if (maxIndex != previousIndex) {
+                    // Adjust index: since index 0 is blank, the actual character mapping is maxIndex - 1.
+                    val charIndex = maxIndex - 1
+                    if (charIndex in charset.indices) {
+                        result.append(charset[charIndex])
+                    }
                 }
-                // Otherwise, skip repeated predictions (core of CTC algorithm)
             }
-
-            previousClass = maxIndex
+            previousIndex = maxIndex
         }
 
         return result.toString()
     }
+
+    // Most max probabillity values are between 8 and 25. This function converts these values to actual probability values between 0 and 1.
+    private fun softmax(logits: FloatArray, temperature: Float = 1.0f): FloatArray {
+        // Apply temperature scaling: divide logits by the temperature
+        val scaledLogits = logits.map { it / temperature }.toFloatArray()
+
+        // Calculate the softmax of the scaled logits
+        val expVals = scaledLogits.map { Math.exp(it.toDouble()).toFloat() }.toFloatArray()
+        val sum = expVals.sum()
+        return expVals.map { it / sum }.toFloatArray()
+    }
+
 
     /**
      * Cleans up OCR recognition results by handling common recognition errors.
