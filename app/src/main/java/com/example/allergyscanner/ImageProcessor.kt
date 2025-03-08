@@ -124,17 +124,17 @@ class ImageProcessor(private val context: Context) {
             val postprocessedResult = postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
             Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
 
+            // If no text regions are detected, have the OCR attempt extracting text from the entire image
             if (postprocessedResult.isEmpty()) {
-                Log.d(TAG, "No text regions detected")
-                // Fallback to full image processing
-                val recognizerInput = preprocessDetector(bitmap)
-                val recognizerOutput = runRecognizer(recognizerInput.detectorInput)
+                Log.d(TAG, "No text regions detected, attempting to extract text from entire image")
+                val recognizerInput = prepareRecognizerInput(preprocessedInput.grayscaleBitmap)
+                val recognizerOutput = runRecognizer(recognizerInput)
                 val fallbackText = processRecognizerOutput(recognizerOutput)
-                Log.d(TAG, "Fallback recognition result: $fallbackText")
+                Log.d(TAG, "Text extracted from full image: $fallbackText")
                 return "Full image: $fallbackText"
             }
 
-            // Step 4: Recognize text in each detected region
+            // Recognize text in each detected region
             val results = mutableListOf<String>()
 
             // iterate over each detected text region/box
