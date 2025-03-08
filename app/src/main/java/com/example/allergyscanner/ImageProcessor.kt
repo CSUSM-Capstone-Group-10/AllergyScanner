@@ -114,23 +114,21 @@ class ImageProcessor(private val context: Context) {
         check(isInitialized) { "Interpreters not initialized" }
 
         try {
-            // Step 1: Pre-process the image for better text visibility
-            val enhancedBitmap = enhanceTextVisibility(bitmap)
-            Log.d(TAG, "Enhanced image for better visibility")
+            // Preprocess the image and prepare input for the model
+            val preprocessedInput = preprocessDetector(bitmap)
 
-            // Step 2: Convert to grayscale for OCR processing
-            val grayscaleBitmap = convertToGrayscale(enhancedBitmap)
-            Log.d(TAG, "Converted to grayscale")
+            // Run the detector
+            val detectorOutput = runDetector(preprocessedInput.detectorInput)
 
-            // Step 3: Detect text regions using the detector model
-            val textRegions = detectTextRegions(enhancedBitmap)
-            Log.d(TAG, "Detected ${textRegions.size} text regions")
+            // Postprocess the output. This contains the text regions in the image.
+            val postprocessedResult = postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
+            Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
 
-            if (textRegions.isEmpty()) {
+            if (postprocessedResult.isEmpty()) {
                 Log.d(TAG, "No text regions detected")
                 // Fallback to full image processing
-                val recognizerInput = prepareRecognizerInput(grayscaleBitmap)
-                val recognizerOutput = runRecognizer(recognizerInput)
+                val recognizerInput = preprocessDetector(bitmap)
+                val recognizerOutput = runRecognizer(recognizerInput.detectorInput)
                 val fallbackText = processRecognizerOutput(recognizerOutput)
                 Log.d(TAG, "Fallback recognition result: $fallbackText")
                 return "Full image: $fallbackText"
@@ -139,8 +137,9 @@ class ImageProcessor(private val context: Context) {
             // Step 4: Recognize text in each detected region
             val results = mutableListOf<String>()
 
-            for ((index, region) in textRegions.withIndex()) {
-                val croppedRegion = cropTextRegion(grayscaleBitmap, region)
+            // iterate over each detected text region/box
+            for ((index, region) in postprocessedResult.withIndex()) {
+                val croppedRegion = cropTextRegion(preprocessedInput.grayscaleBitmap, region)
                 val recognizerInput = prepareRecognizerInput(croppedRegion)
                 val recognizerOutput = runRecognizer(recognizerInput)
                 val recognizedText = processRecognizerOutput(recognizerOutput)
@@ -160,6 +159,17 @@ class ImageProcessor(private val context: Context) {
             Log.e(TAG, "Error in image processing pipeline", e)
             return "Error: ${e.message ?: "Unknown error"}"
         }
+    }
+
+    /**
+     * Enhances text visibility and applies grayscaling to the image, then prepares the input for the model.
+     */
+    private fun preprocessDetector(bitmap: Bitmap) : PreprocessedData
+    {
+        val enhancedMap = enhanceTextVisibility(bitmap)
+        val grayscaleBitmap = convertToGrayscale(enhancedMap)
+        val preparedInput = prepareDetectorInput(grayscaleBitmap)
+        return PreprocessedData(grayscaleBitmap, preparedInput)
     }
 
     /**
@@ -213,20 +223,6 @@ class ImageProcessor(private val context: Context) {
 
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
         return result
-    }
-
-    /**
-     * Detects text regions in the input image using the detector model.
-     */
-    private fun detectTextRegions(bitmap: Bitmap): List<RectF> {
-        // Prepare input for detector
-        val detectorInput = prepareDetectorInput(bitmap)
-
-        // Run detector model
-        val detectorOutput = runDetector(detectorInput)
-
-        // Post-process detector output to get text regions
-        return postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
     }
 
     /**
@@ -679,6 +675,11 @@ class ImageProcessor(private val context: Context) {
         val contrastThreshold: Float,
         val adjustContrast: Float,
         val filterThreshold: Float
+    )
+
+    data class PreprocessedData(
+        val grayscaleBitmap: Bitmap,
+        val detectorInput: ByteBuffer
     )
 
     companion object {
