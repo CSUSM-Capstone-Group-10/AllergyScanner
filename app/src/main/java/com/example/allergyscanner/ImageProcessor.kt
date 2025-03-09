@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -11,6 +12,8 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.util.Log
 import org.tensorflow.lite.Interpreter
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -110,10 +113,12 @@ class ImageProcessor(private val context: Context) {
         }
     }
 
-    fun processImage(bitmap: Bitmap): String {
+    fun processImage(bitmap: Bitmap): String
+    {
         check(isInitialized) { "Interpreters not initialized" }
 
-        try {
+        try
+        {
             // Preprocess the image and prepare input for the model
             val preprocessedInput = preprocessDetector(bitmap)
 
@@ -124,8 +129,12 @@ class ImageProcessor(private val context: Context) {
             val postprocessedResult = postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
             Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
 
+            // TODO for debugging
+            saveBitmapToCache(drawRegionsOnImage(preprocessedInput.grayscaleBitmap, postprocessedResult), context, "image_with_regions.png")
+
             // If no text regions are detected, have the OCR attempt extracting text from the entire image
-            if (postprocessedResult.isEmpty()) {
+            if (postprocessedResult.isEmpty())
+            {
                 Log.d(TAG, "No text regions detected, attempting to extract text from entire image")
                 val recognizerInput = prepareRecognizerInput(preprocessedInput.grayscaleBitmap)
                 val recognizerOutput = runRecognizer(recognizerInput)
@@ -134,18 +143,22 @@ class ImageProcessor(private val context: Context) {
                 return "Full image: $fallbackText"
             }
 
-            // Recognize text in each detected region
+            // Assuming now that there are detected text regions, attempt to recognize text in each detected region
             val results = mutableListOf<String>()
 
             // iterate over each detected text region/box
-            for ((index, region) in postprocessedResult.withIndex()) {
+            for ((index, region) in postprocessedResult.withIndex())
+            {
                 val croppedRegion = cropTextRegion(preprocessedInput.grayscaleBitmap, region)
                 val recognizerInput = prepareRecognizerInput(croppedRegion)
                 val recognizerOutput = runRecognizer(recognizerInput)
                 val recognizedText = processRecognizerOutput(recognizerOutput)
-
                 val cleanedText = cleanupRecognitionResult(recognizedText)
-                if (cleanedText.isNotEmpty()) {
+
+                Log.d(TAG, "Region $index: $recognizedText (cleaned: $cleanedText)") // Add this log
+
+                if (cleanedText.isNotEmpty())
+                {
                     results.add(cleanedText)
                     Log.d(TAG, "Region $index: $cleanedText (raw: $recognizedText)")
                 }
@@ -155,7 +168,9 @@ class ImageProcessor(private val context: Context) {
             Log.d(TAG, "Final results: $resultText")
             return resultText
 
-        } catch (e: Exception) {
+        }
+        catch (e: Exception)
+        {
             Log.e(TAG, "Error in image processing pipeline", e)
             return "Error: ${e.message ?: "Unknown error"}"
         }
@@ -167,7 +182,12 @@ class ImageProcessor(private val context: Context) {
     private fun preprocessDetector(bitmap: Bitmap) : PreprocessedData
     {
         val enhancedMap = enhanceTextVisibility(bitmap)
+
+
+
         val grayscaleBitmap = convertToGrayscale(enhancedMap)
+        //val savedFile = saveBitmapToCache(grayscaleBitmap, context)
+        //Log.d("Debug Image", "Processed image saved to: ${savedFile.absolutePath}")
         val preparedInput = prepareDetectorInput(grayscaleBitmap)
         return PreprocessedData(grayscaleBitmap, preparedInput)
     }
@@ -225,6 +245,39 @@ class ImageProcessor(private val context: Context) {
         return result
     }
 
+    // TODO DEBUG function: Saves bitmap image to emulator/device cache to verify output
+    fun saveBitmapToCache(bitmap: Bitmap, context: Context, filename: String): File {
+        // Create a file in the app's cache directory
+        val file = File(context.cacheDir, filename)
+        try {
+            val outputStream = FileOutputStream(file)
+            // Compress the bitmap as PNG and write to the file
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return file
+    }
+
+    // TODO DEBUG function: for viewing the bounding boxes generate by model onto image
+    private fun drawRegionsOnImage(bitmap: Bitmap, regions: List<RectF>): Bitmap {
+        val canvas = Canvas(bitmap)
+        val paint = Paint().apply {
+            color = Color.RED
+            strokeWidth = 5f
+            style = Paint.Style.STROKE
+        }
+
+        for (region in regions) {
+            canvas.drawRect(region, paint)
+        }
+
+        return bitmap
+    }
+
+
     /**
      * Crops a region from the input bitmap based on the specified bounding box.
      */
@@ -256,6 +309,9 @@ class ImageProcessor(private val context: Context) {
     private fun prepareDetectorInput(bitmap: Bitmap): ByteBuffer {
         // Resize bitmap to detector dimensions
         val resized = Bitmap.createScaledBitmap(bitmap, detectorWidth, detectorHeight, true)
+
+        // Debug: saves resized image to device cache
+        saveBitmapToCache(resized, context, "resized_image.png")
 
         // Create buffer with correct size (NCHW format)
         val bufferSize = detectorBatch * detectorChannels * detectorHeight * detectorWidth * FLOAT_TYPE_SIZE
