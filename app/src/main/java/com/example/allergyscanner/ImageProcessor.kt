@@ -136,7 +136,7 @@ class ImageProcessor(private val context: Context) {
             if (postprocessedResult.isEmpty())
             {
                 Log.d(TAG, "No text regions detected, attempting to extract text from entire image")
-                val recognizerInput = prepareRecognizerInput(preprocessedInput.grayscaleBitmap)
+                val recognizerInput = prepareRecognizerInput(preprocessedInput.grayscaleBitmap, 0)
                 val recognizerOutput = runRecognizer(recognizerInput)
                 val fallbackText = processRecognizerOutput(recognizerOutput)
                 Log.d(TAG, "Text extracted from full image: $fallbackText")
@@ -150,7 +150,12 @@ class ImageProcessor(private val context: Context) {
             for ((index, region) in postprocessedResult.withIndex())
             {
                 val croppedRegion = cropTextRegion(preprocessedInput.grayscaleBitmap, region)
-                val recognizerInput = prepareRecognizerInput(croppedRegion)
+                // saveBitmapToCache(croppedRegion, context, "cropped_region$index.png") // This looks OK
+
+                // TODO
+                val recognizerInput = prepareRecognizerInput(croppedRegion, index)
+
+
                 val recognizerOutput = runRecognizer(recognizerInput)
                 val recognizedText = processRecognizerOutput(recognizerOutput)
                 val cleanedText = cleanupRecognitionResult(recognizedText)
@@ -545,9 +550,55 @@ class ImageProcessor(private val context: Context) {
     /**
      * Prepares input for the recognizer model.
      */
-    private fun prepareRecognizerInput(bitmap: Bitmap): ByteBuffer {
-        // Resize bitmap to recognizer dimensions
-        val resized = Bitmap.createScaledBitmap(bitmap, recognizerWidth, recognizerHeight, true)
+    private fun prepareRecognizerInput(bitmap: Bitmap, index: Int): ByteBuffer {
+        // Get the original width and height of the bitmap
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        // Calculate the aspect ratio
+        val aspectRatio = originalWidth.toFloat() / originalHeight.toFloat()
+
+        // Determine if the image is wider or taller compared to the target dimensions
+        val targetWidth = recognizerWidth
+        val targetHeight = recognizerHeight
+
+        var newWidth = targetWidth
+        var newHeight = targetHeight
+
+        // Resize while maintaining the aspect ratio
+        if (aspectRatio > 1) {
+            // If the image is wide, fit by width and scale the height accordingly
+            newWidth = targetWidth
+            newHeight = (newWidth / aspectRatio).toInt()
+        } else {
+            // If the image is tall, fit by height and scale the width accordingly
+            newHeight = targetHeight
+            newWidth = (newHeight * aspectRatio).toInt()
+        }
+
+        // Resize the image while maintaining the aspect ratio
+        val resized = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+
+        // Save the resized image for debugging
+        saveBitmapToCache(resized, context, "prepareRecognizerResizedRegion$index.png")
+
+        // Create a blank (white) canvas with the target dimensions
+        val paddedBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(paddedBitmap)
+        val paint = Paint()
+
+        // Fill the canvas with a white background (or you can choose black or transparent)
+        canvas.drawColor(Color.WHITE)
+
+        // Calculate the position to center the resized image on the canvas
+        val left = 0
+        val top = 0
+
+        // Draw the resized image onto the canvas
+        canvas.drawBitmap(resized, left.toFloat(), top.toFloat(), paint)
+
+        // Save the padded image (for debugging)
+        saveBitmapToCache(paddedBitmap, context, "prepareRecognizerPaddedRegion$index.png")
 
         // Create buffer with correct size (NCHW format)
         val bufferSize = recognizerBatch * recognizerChannels * recognizerHeight * recognizerWidth * FLOAT_TYPE_SIZE
@@ -557,7 +608,7 @@ class ImageProcessor(private val context: Context) {
 
         // Get pixel data
         val pixels = IntArray(recognizerWidth * recognizerHeight)
-        resized.getPixels(pixels, 0, recognizerWidth, 0, 0, recognizerWidth, recognizerHeight)
+        paddedBitmap.getPixels(pixels, 0, recognizerWidth, 0, 0, recognizerWidth, recognizerHeight)
 
         // Convert to grayscale and normalize (NCHW format)
         for (y in 0 until recognizerHeight) {
@@ -579,6 +630,8 @@ class ImageProcessor(private val context: Context) {
         buffer.rewind()
         return buffer
     }
+
+
 
     /**
      * Runs the recognizer model on the prepared input.
