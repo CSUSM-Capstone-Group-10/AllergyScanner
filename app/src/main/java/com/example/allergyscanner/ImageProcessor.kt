@@ -5,6 +5,7 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorSpace.Model
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.Log
@@ -18,8 +19,10 @@ import kotlin.math.min
 
 class ImageProcessor(private val context: Context)
 {
+    val TAG = "ImageProcessor"
     private val EasyocrDetector by lazy { EasyocrDetector(context) }
     private val EasyocrRecognizer by lazy { EasyocrRecognizer(context) }
+    private val ModelUtilityFunctions by lazy { ModelUtilityFunctions() }
 
     var isInitialized = false
         private set
@@ -29,7 +32,7 @@ class ImageProcessor(private val context: Context)
     {
         EasyocrDetector.initializeInterpreter()
         EasyocrRecognizer.initializeInterpreter()
-        Log.d(TAG, "Initialized detectors and recognizers")
+        Log.d(TAG, "Initialized detector and recognizer")
     }
 
 
@@ -56,9 +59,8 @@ class ImageProcessor(private val context: Context)
             // iterate over each detected text region/box
             for ((index, region) in detectedTextRegions.withIndex())
             {
-                val croppedRegion = cropTextRegion(EasyocrDetector.preprocessedInput.grayscaleBitmap, region)
+                val croppedRegion = ModelUtilityFunctions.cropTextRegion(EasyocrDetector.preprocessedInput.grayscaleBitmap, region)
                 // saveBitmapToCache(croppedRegion, context, "cropped_region$index.png") // This looks OK
-
 
                 val recognizerOutputText = EasyocrRecognizer.runModel(croppedRegion, index)
                 val cleanedOutputText = EasyocrRecognizer.cleanupRecognitionResult(recognizerOutputText)
@@ -74,86 +76,11 @@ class ImageProcessor(private val context: Context)
             val resultText = results.joinToString("\n")
             Log.d(TAG, "Final results: $resultText")
             return resultText
-
         }
         catch (e: Exception)
         {
             Log.e(TAG, "Error in image processing pipeline", e)
             return "Error: ${e.message ?: "Unknown error"}"
         }
-    }
-
-    // TODO DEBUG function: Saves bitmap image to emulator/device cache to verify output
-    fun saveBitmapToCache(bitmap: Bitmap, context: Context, filename: String): File
-    {
-        // Create a file in the app's cache directory
-        val file = File(context.cacheDir, filename)
-        try
-        {
-            val outputStream = FileOutputStream(file)
-            // Compress the bitmap as PNG and write to the file
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            outputStream.flush()
-            outputStream.close()
-        }
-        catch (e: IOException)
-        {
-            e.printStackTrace()
-        }
-        return file
-    }
-
-    // TODO DEBUG function: for viewing the bounding boxes generate by model onto image
-    private fun drawRegionsOnImage(bitmap: Bitmap, regions: List<RectF>): Bitmap
-    {
-        val canvas = Canvas(bitmap)
-        val paint = Paint().apply {
-            color = Color.RED
-            strokeWidth = 5f
-            style = Paint.Style.STROKE
-        }
-
-        for (region in regions)
-        {
-            canvas.drawRect(region, paint)
-        }
-
-        return bitmap
-    }
-
-
-    /**
-     * Crops a region from the input bitmap based on the specified bounding box.
-     */
-    private fun cropTextRegion(bitmap: Bitmap, region: RectF): Bitmap
-    {
-        // Ensure coordinates are within bitmap bounds
-        val x = max(0, region.left.toInt())
-        val y = max(0, region.top.toInt())
-        val width = min(bitmap.width - x, region.width().toInt())
-        val height = min(bitmap.height - y, region.height().toInt())
-
-        // Skip invalid regions
-        if (width <= 0 || height <= 0) {
-            Log.w(TAG, "Invalid crop region: $region")
-            return bitmap
-        }
-
-        try
-        {
-            // Create a cropped bitmap from the region
-            return Bitmap.createBitmap(bitmap, x, y, width, height)
-        }
-        catch (e: Exception)
-        {
-            Log.e(TAG, "Error cropping region: $region", e)
-            return bitmap
-        }
-    }
-
-    companion object
-    {
-        const val TAG = "ImageProcessor"
-        private const val FLOAT_TYPE_SIZE = 4
     }
 }

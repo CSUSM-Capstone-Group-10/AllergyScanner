@@ -1,24 +1,21 @@
 package com.example.allergyscanner
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
 import org.tensorflow.lite.Interpreter
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.channels.FileChannel
 import kotlin.math.max
 
 class EasyocrRecognizer(private val context: Context) {
 
     private var recognizerInterpreter: Interpreter? = null
+    private val ModelUtilityFunctions by lazy { ModelUtilityFunctions() }
 
     // Recognizer dimensions (from specifications)
     private val recognizerBatch = 1
@@ -45,7 +42,7 @@ class EasyocrRecognizer(private val context: Context) {
 
 
         // Initialize recognizer
-        val recognizerModel = loadModelFile(assetManager, "easyocr_recognizer.tflite")
+        val recognizerModel = ModelUtilityFunctions.loadModelFile(assetManager, "easyocr_recognizer.tflite")
         val recognizerOptions = Interpreter.Options().apply {
             setNumThreads(4)
         }
@@ -60,25 +57,6 @@ class EasyocrRecognizer(private val context: Context) {
 
         isInitialized = true
         Log.d(TAG, "Initialized recognizer")
-    }
-
-    private fun loadModelFile(assetManager: AssetManager, modelPath: String): ByteBuffer
-    {
-        val fileDescriptor = assetManager.openFd(modelPath)
-        val inputStream = fileDescriptor.createInputStream()
-        val fileChannel = inputStream.channel
-        val startOffset = fileDescriptor.startOffset
-        val declaredLength = fileDescriptor.declaredLength
-
-        try
-        {
-            return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-        }
-        finally
-        {
-            inputStream.close()
-            fileDescriptor.close()
-        }
     }
 
     fun runModel(bitmap : Bitmap, index : Int) : String
@@ -133,7 +111,7 @@ class EasyocrRecognizer(private val context: Context) {
         val resized = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 
         // Save the resized image for debugging
-        saveBitmapToCache(resized, context, "prepareRecognizerResizedRegion$index.png")
+        ModelUtilityFunctions.saveBitmapToCache(resized, context, "prepareRecognizerResizedRegion$index.png")
 
         // Create a blank (white) canvas with the target dimensions
         val paddedBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
@@ -151,7 +129,7 @@ class EasyocrRecognizer(private val context: Context) {
         canvas.drawBitmap(resized, left.toFloat(), top.toFloat(), paint)
 
         // Save the padded image (for debugging)
-        saveBitmapToCache(paddedBitmap, context, "prepareRecognizerPaddedRegion$index.png")
+        ModelUtilityFunctions.saveBitmapToCache(paddedBitmap, context, "prepareRecognizerPaddedRegion$index.png")
 
         // Create buffer with correct size (NCHW format)
         val bufferSize = recognizerBatch * recognizerChannels * recognizerHeight * recognizerWidth * FLOAT_TYPE_SIZE
@@ -342,23 +320,4 @@ class EasyocrRecognizer(private val context: Context) {
         private const val FLOAT_TYPE_SIZE = 4
     }
 
-    // TODO DEBUG function: Saves bitmap image to emulator/device cache to verify output
-    fun saveBitmapToCache(bitmap: Bitmap, context: Context, filename: String): File {
-        // Create a file in the app's cache directory
-        val file = File(context.cacheDir, filename)
-
-        try
-        {
-            val outputStream = FileOutputStream(file)
-            // Compress the bitmap as PNG and write to the file
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            outputStream.flush()
-            outputStream.close()
-        }
-        catch (e: IOException)
-        {
-            e.printStackTrace()
-        }
-        return file
-    }
 }

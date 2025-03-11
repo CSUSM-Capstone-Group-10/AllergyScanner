@@ -1,28 +1,25 @@
 package com.example.allergyscanner
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.Log
 import org.tensorflow.lite.Interpreter
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.channels.FileChannel
 import kotlin.math.max
 import kotlin.math.min
 
 class EasyocrDetector(private val context: Context)
-{
+    {
     private var detectorInterpreter: Interpreter? = null
+    private val ModelUtilityFunctions by lazy { ModelUtilityFunctions() }
+    private val TAG = "ImageProcessor"
 
     // Detector dimensions (from specifications)
     private val detectorBatch = 1
@@ -56,43 +53,21 @@ class EasyocrDetector(private val context: Context)
         val assetManager = context.assets
 
         // Initialize detector
-        val detectorModel = loadModelFile(assetManager, "easyocr_detector.tflite")
+        val detectorModel = ModelUtilityFunctions.loadModelFile(assetManager, "easyocr_detector.tflite")
         val detectorOptions = Interpreter.Options().apply {
             setNumThreads(4)
         }
         detectorInterpreter = Interpreter(detectorModel, detectorOptions)
 
-
         // Verify input/output shapes
         val detectorInputShape = detectorInterpreter!!.getInputTensor(0).shape()
-
         Log.d(TAG, "Detector input shape: [${detectorInputShape[0]}, ${detectorInputShape[1]}, ${detectorInputShape[2]}, ${detectorInputShape[3]}]")
 
         val detectorOutputShape = detectorInterpreter!!.getOutputTensor(0).shape()
-
         Log.d(TAG, "Detector output shape: ${detectorOutputShape.contentToString()}")
 
         isInitialized = true
         Log.d(TAG, "Initialized detector")
-    }
-
-    private fun loadModelFile(assetManager: AssetManager, modelPath: String): ByteBuffer
-    {
-        val fileDescriptor = assetManager.openFd(modelPath)
-        val inputStream = fileDescriptor.createInputStream()
-        val fileChannel = inputStream.channel
-        val startOffset = fileDescriptor.startOffset
-        val declaredLength = fileDescriptor.declaredLength
-
-        try
-        {
-            return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-        }
-        finally
-        {
-            inputStream.close()
-            fileDescriptor.close()
-        }
     }
 
     fun runModel(bitmap: Bitmap): List<RectF>
@@ -106,12 +81,11 @@ class EasyocrDetector(private val context: Context)
         // Postprocess the output. This contains the text regions in the image.
         val postprocessedResult = postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
 
-        Log.d(ImageProcessor.TAG, "Detected ${postprocessedResult.size} text regions")
-        saveBitmapToCache(drawRegionsOnImage(preprocessedInput.grayscaleBitmap, postprocessedResult), context, "image_with_regions.png")
+        Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
+        ModelUtilityFunctions.saveBitmapToCache(ModelUtilityFunctions.drawRegionsOnImage(preprocessedInput.grayscaleBitmap, postprocessedResult), context, "image_with_regions.png")
 
         return postprocessedResult
     }
-
 
     /**
      * Enhances text visibility and applies grayscaling to the image, then prepares the input for the model.
@@ -121,7 +95,6 @@ class EasyocrDetector(private val context: Context)
         val enhancedMap = enhanceTextVisibility(bitmap)
         val grayscaleBitmap = convertToGrayscale(enhancedMap)
         //val savedFile = saveBitmapToCache(grayscaleBitmap, context)
-        //Log.d("Debug Image", "Processed image saved to: ${savedFile.absolutePath}")
         val preparedInput = prepareDetectorInput(bitmap)
         return PreprocessedData(bitmap, preparedInput)
     }
@@ -181,26 +154,6 @@ class EasyocrDetector(private val context: Context)
         return result
     }
 
-    // TODO DEBUG function: Saves bitmap image to emulator/device cache to verify output
-    fun saveBitmapToCache(bitmap: Bitmap, context: Context, filename: String): File
-    {
-        // Create a file in the app's cache directory
-        val file = File(context.cacheDir, filename)
-
-        try
-        {
-            val outputStream = FileOutputStream(file)
-            // Compress the bitmap as PNG and write to the file
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            outputStream.flush()
-            outputStream.close()
-        }
-        catch (e: IOException)
-        {
-            e.printStackTrace()
-        }
-        return file
-    }
 
     /**
      * Prepares input for the detector model.
@@ -211,7 +164,7 @@ class EasyocrDetector(private val context: Context)
         val resized = Bitmap.createScaledBitmap(bitmap, detectorWidth, detectorHeight, true)
 
         // Debug: saves resized image to device cache
-        saveBitmapToCache(resized, context, "resized_image.png")
+        ModelUtilityFunctions.saveBitmapToCache(resized, context, "resized_image.png")
 
         // Create buffer with correct size (NCHW format)
         val bufferSize = detectorBatch * detectorChannels * detectorHeight * detectorWidth * FLOAT_TYPE_SIZE
@@ -416,26 +369,6 @@ class EasyocrDetector(private val context: Context)
         }
 
         return RectF(minX.toFloat(), minY.toFloat(), maxX.toFloat(), maxY.toFloat())
-    }
-
-    // TODO DEBUG function: for viewing the bounding boxes generate by model onto image
-    private fun drawRegionsOnImage(bitmap: Bitmap, regions: List<RectF>): Bitmap
-    {
-        val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-
-        val canvas = Canvas(mutableBitmap)
-        val paint = Paint().apply {
-            color = Color.RED
-            strokeWidth = 5f
-            style = Paint.Style.STROKE
-        }
-
-        for (region in regions)
-        {
-            canvas.drawRect(region, paint)
-        }
-
-        return mutableBitmap
     }
 
     /**
