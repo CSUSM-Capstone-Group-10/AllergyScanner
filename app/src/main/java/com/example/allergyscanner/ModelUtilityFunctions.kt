@@ -55,7 +55,7 @@ class ModelUtilityFunctions
             canvas.drawRect(region, paint)
         }
 
-        return bitmap
+        return mutableBitmap
     }
 
     /**

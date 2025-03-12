@@ -3,6 +3,7 @@ package com.example.allergyscanner
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -26,8 +27,6 @@ class EasyocrDetector(private val context: Context)
     private val detectorChannels = 3
     private val detectorHeight = 608
     private val detectorWidth = 800
-
-    lateinit var preprocessedInput: PreprocessedData
 
     // Detector post-processing parameters (matching DETECTOR_ARGS in Python)
     private val detectorConfig = DetectorConfig(
@@ -73,100 +72,31 @@ class EasyocrDetector(private val context: Context)
     fun runModel(bitmap: Bitmap): List<RectF>
     {
         // Preprocess the image and prepare input for the model
-        this.preprocessedInput = preprocessDetector(bitmap)
+        val preparedInput =  prepareDetectorInput(bitmap)
 
         // Run the detector
-        val detectorOutput = runDetector(preprocessedInput.detectorInput)
+        val detectorOutput = runDetector(preparedInput)
 
         // Postprocess the output. This contains the text regions in the image.
-        val postprocessedResult = postProcessDetectorOutput(detectorOutput, bitmap.width, bitmap.height)
+        val postprocessedResult = postProcessDetectorOutput(detectorOutput, detectorWidth, detectorHeight)
 
         Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
-        ModelUtilityFunctions.saveBitmapToCache(ModelUtilityFunctions.drawRegionsOnImage(preprocessedInput.grayscaleBitmap, postprocessedResult), context, "image_with_regions.png")
+        ModelUtilityFunctions.saveBitmapToCache(ModelUtilityFunctions.drawRegionsOnImage(bitmap, postprocessedResult), context, "image_with_regions.png")
 
         return postprocessedResult
     }
 
     /**
-     * Enhances text visibility and applies grayscaling to the image, then prepares the input for the model.
-     */
-    private fun preprocessDetector(bitmap: Bitmap) : PreprocessedData
-    {
-        val enhancedMap = enhanceTextVisibility(bitmap)
-        val grayscaleBitmap = convertToGrayscale(enhancedMap)
-        //val savedFile = saveBitmapToCache(grayscaleBitmap, context)
-        val preparedInput = prepareDetectorInput(bitmap)
-        return PreprocessedData(bitmap, preparedInput)
-    }
-
-    /**
-     * Enhances text visibility in the image through contrast adjustment.
-     */
-    private fun enhanceTextVisibility(bitmap: Bitmap): Bitmap
-    {
-        val width = bitmap.width
-        val height = bitmap.height
-        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-        val canvas = Canvas(result)
-
-        // Apply contrast enhancement using ColorMatrix
-        val colorMatrix = ColorMatrix().apply {
-            // Increase contrast
-            setSaturation(1.3f)
-
-            // Adjust brightness and contrast
-            val scale = 1.2f
-            val translate = -15f
-            postConcat(ColorMatrix(floatArrayOf(
-                scale, 0f, 0f, 0f, translate,
-                0f, scale, 0f, 0f, translate,
-                0f, 0f, scale, 0f, translate,
-                0f, 0f, 0f, 1f, 0f
-            )))
-        }
-
-        val enhancedPaint = Paint().apply {
-            colorFilter = ColorMatrixColorFilter(colorMatrix)
-        }
-
-        canvas.drawBitmap(bitmap, 0f, 0f, enhancedPaint)
-        return result
-    }
-
-    /**
-     * Converts a bitmap to grayscale.
-     */
-    private fun convertToGrayscale(bitmap: Bitmap): Bitmap
-    {
-        val width = bitmap.width
-        val height = bitmap.height
-        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-        val canvas = Canvas(result)
-        val paint = Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix().apply {
-                setSaturation(0f)
-            })
-        }
-
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        return result
-    }
-
-
-    /**
      * Prepares input for the detector model.
      */
-    private fun prepareDetectorInput(bitmap: Bitmap): ByteBuffer
-    {
-        // Resize bitmap to detector dimensions
-        val resized = Bitmap.createScaledBitmap(bitmap, detectorWidth, detectorHeight, true)
+    private fun prepareDetectorInput(bitmap: Bitmap): ByteBuffer {
+        // Resize image with aspect ratio padding
+        val resized = resizeWithPadding(bitmap, detectorWidth, detectorHeight)
 
-        // Debug: saves resized image to device cache
-        ModelUtilityFunctions.saveBitmapToCache(resized, context, "resized_image.png")
+        // Debugging: Save padded image to check quality
+        ModelUtilityFunctions.saveBitmapToCache(resized, context, "resized_image_with_padding.png")
 
-        // Create buffer with correct size (NCHW format)
+        // Create ByteBuffer for detector input
         val bufferSize = detectorBatch * detectorChannels * detectorHeight * detectorWidth * FLOAT_TYPE_SIZE
         val buffer = ByteBuffer.allocateDirect(bufferSize).apply {
             order(ByteOrder.nativeOrder())
@@ -176,41 +106,23 @@ class EasyocrDetector(private val context: Context)
         val pixels = IntArray(detectorWidth * detectorHeight)
         resized.getPixels(pixels, 0, detectorWidth, 0, 0, detectorWidth, detectorHeight)
 
-        // Convert to RGB and normalize (NCHW format - organize by channel)
-        // Normalization values from EasyOCR
+        // Normalization values
         val mean = floatArrayOf(0.485f, 0.456f, 0.406f)
         val std = floatArrayOf(0.229f, 0.224f, 0.225f)
 
-        // Red channel
-        for (y in 0 until detectorHeight)
-        {
-            for (x in 0 until detectorWidth)
-            {
-                val pixel = pixels[y * detectorWidth + x]
-                val r = ((pixel shr 16) and 0xFF) / 255.0f
-                buffer.putFloat((r - mean[0]) / std[0])
-            }
-        }
-
-        // Green channel
-        for (y in 0 until detectorHeight)
-        {
-            for (x in 0 until detectorWidth)
-            {
-                val pixel = pixels[y * detectorWidth + x]
-                val g = ((pixel shr 8) and 0xFF) / 255.0f
-                buffer.putFloat((g - mean[1]) / std[1])
-            }
-        }
-
-        // Blue channel
-        for (y in 0 until detectorHeight)
-        {
-            for (x in 0 until detectorWidth)
-            {
-                val pixel = pixels[y * detectorWidth + x]
-                val b = (pixel and 0xFF) / 255.0f
-                buffer.putFloat((b - mean[2]) / std[2])
+        // Fill buffer in NCHW format
+        for (c in 0 until 3) { // RGB channels
+            for (y in 0 until detectorHeight) {
+                for (x in 0 until detectorWidth) {
+                    val pixel = pixels[y * detectorWidth + x]
+                    val value = when (c) {
+                        0 -> ((pixel shr 16) and 0xFF) / 255.0f // Red
+                        1 -> ((pixel shr 8) and 0xFF) / 255.0f  // Green
+                        2 -> (pixel and 0xFF) / 255.0f         // Blue
+                        else -> 0.0f
+                    }
+                    buffer.putFloat((value - mean[c]) / std[c])
+                }
             }
         }
 
@@ -218,7 +130,31 @@ class EasyocrDetector(private val context: Context)
         return buffer
     }
 
-    /**
+        private fun resizeWithPadding(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+            val aspectRatio = bitmap.width.toFloat() / bitmap.height
+            val targetAspectRatio = targetWidth.toFloat() / targetHeight
+
+            val scaleWidth: Int
+            val scaleHeight: Int
+            if (aspectRatio > targetAspectRatio) {
+                scaleWidth = targetWidth
+                scaleHeight = (targetWidth / aspectRatio).toInt()
+            } else {
+                scaleHeight = targetHeight
+                scaleWidth = (targetHeight * aspectRatio).toInt()
+            }
+
+            val resized = Bitmap.createScaledBitmap(bitmap, scaleWidth, scaleHeight, true)
+            val outputBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(outputBitmap)
+            canvas.drawColor(Color.WHITE) // Padding color
+            canvas.drawBitmap(resized, ((targetWidth - scaleWidth) / 2).toFloat(), ((targetHeight - scaleHeight) / 2).toFloat(), null)
+
+            return outputBitmap
+        }
+
+
+        /**
      * Runs the detector model on the prepared input.
      */
     private fun runDetector(input: ByteBuffer): ByteBuffer
@@ -311,7 +247,6 @@ class EasyocrDetector(private val context: Context)
             }
         }
 
-        // Group nearby regions (simplified version of group_text_box function)
         return regions
     }
 
@@ -388,11 +323,6 @@ class EasyocrDetector(private val context: Context)
         val addMargin: Float
     )
 
-    data class PreprocessedData
-    (
-        val grayscaleBitmap: Bitmap,
-        val detectorInput: ByteBuffer
-    )
 
     companion object
     {
