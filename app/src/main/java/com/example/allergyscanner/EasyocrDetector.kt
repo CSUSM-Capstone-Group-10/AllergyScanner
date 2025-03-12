@@ -83,7 +83,7 @@ class EasyocrDetector(private val context: Context)
 
         Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
         ModelUtilityFunctions.saveBitmapToCache(ModelUtilityFunctions.drawRegionsOnImage(preparedInput.second, postprocessedResult), context, "image_with_regions.png")
-
+        //asdf
         return postprocessedResult
     }
 
