@@ -30,19 +30,20 @@ class EasyocrDetector(private val context: Context)
 
     // Detector post-processing parameters (matching DETECTOR_ARGS in Python)
     private val detectorConfig = DetectorConfig(
-        textThreshold = 0.7f,
-        linkThreshold = 0.4f,
-        lowText = 0.4f,
+        textThreshold = 0.5f,
+        linkThreshold = 0.2f,
+        lowText = 0.3f,
         poly = false,
-        minSize = 20,
+        minSize = 30,
         slopeThreshold = 0.1f,
         yCenterThreshold = 0.5f,
-        heightThreshold = 0.5f,
-        widthThreshold = 0.5f,
-        addMargin = 0.1f
+        heightThreshold = 0.7f,
+        widthThreshold = 0.2f,
+        addMargin = 0.05f
     )
 
-    var isInitialized = false
+
+        var isInitialized = false
         private set
 
     @Throws(IOException::class)
@@ -75,7 +76,7 @@ class EasyocrDetector(private val context: Context)
         val preparedInput =  prepareDetectorInput(bitmap)
 
         // Run the detector
-        val detectorOutput = runDetector(preparedInput)
+        val detectorOutput = runDetector(preparedInput.first)
 
         // Postprocess the output. This contains the text regions in the image.
         val postprocessedResult = postProcessDetectorOutput(detectorOutput, detectorWidth, detectorHeight)
@@ -89,7 +90,8 @@ class EasyocrDetector(private val context: Context)
     /**
      * Prepares input for the detector model.
      */
-    private fun prepareDetectorInput(bitmap: Bitmap): ByteBuffer {
+    private fun prepareDetectorInput(bitmap: Bitmap): Pair<ByteBuffer, Bitmap>
+    {
         // Resize image with aspect ratio padding
         val resized = resizeWithPadding(bitmap, detectorWidth, detectorHeight)
 
@@ -127,7 +129,7 @@ class EasyocrDetector(private val context: Context)
         }
 
         buffer.rewind()
-        return buffer
+        return Pair(buffer, resized)
     }
 
         private fun resizeWithPadding(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
@@ -183,8 +185,8 @@ class EasyocrDetector(private val context: Context)
     {
         // Get tensor dimensions
         val outputShape = detectorInterpreter!!.getOutputTensor(0).shape()
-        val height = outputShape[1]
-        val width = outputShape[2]
+        val height = outputShape[1] // 304px
+        val width = outputShape[2] // 400px
 
         // Extract text score map and link score map
         val scoreText = FloatArray(height * width)
@@ -222,8 +224,8 @@ class EasyocrDetector(private val context: Context)
                     val region = findConnectedRegion(x, y, scoreText, scoreLink, width, height, visited)
 
                     // Scale region to original image dimensions
-                    val scaleX = originalWidth / width.toFloat()
-                    val scaleY = originalHeight / height.toFloat()
+                    val scaleX = originalWidth.toFloat() / width.toFloat()
+                    val scaleY = originalHeight.toFloat() / height.toFloat()
 
                     region.left *= scaleX
                     region.top *= scaleY
