@@ -13,6 +13,7 @@ import org.tensorflow.lite.Interpreter
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -30,16 +31,19 @@ class EasyocrDetector(private val context: Context)
 
     // Detector post-processing parameters (matching DETECTOR_ARGS in Python)
     private val detectorConfig = DetectorConfig(
-        textThreshold = 0.5f,
-        linkThreshold = 0.2f,
-        lowText = 0.3f,
+        textThreshold = 0.8f,
+        linkThreshold = 0.0f,
+        lowText = 0.12f,
         poly = false,
         minSize = 30,
         slopeThreshold = 0.1f,
         yCenterThreshold = 0.5f,
-        heightThreshold = 0.7f,
+        heightThreshold = 0.01f,
         widthThreshold = 0.2f,
-        addMargin = 0.05f
+        addMargin = 0.1f,
+        horizontalMergeThreshold = 0.9f,
+        maxHeightThreshold = 0.9f,
+        verticalMergeThreshold = 0.5f
     )
 
 
@@ -181,8 +185,7 @@ class EasyocrDetector(private val context: Context)
      * Post-processes detector output to extract text region bounding boxes.
      * This implements similar logic to the Python EasyOCR's detector_postprocess method.
      */
-    private fun postProcessDetectorOutput(output: ByteBuffer, originalWidth: Int, originalHeight: Int): List<RectF>
-    {
+    private fun postProcessDetectorOutput(output: ByteBuffer, originalWidth: Int, originalHeight: Int): List<RectF> {
         // Get tensor dimensions
         val outputShape = detectorInterpreter!!.getOutputTensor(0).shape()
         val height = outputShape[1] // 304px
@@ -193,26 +196,21 @@ class EasyocrDetector(private val context: Context)
         val scoreLink = FloatArray(height * width)
 
         // Read text score (channel 0) and link score (channel 1)
-        for (y in 0 until height)
-        {
-            for (x in 0 until width)
-            {
+        for (y in 0 until height) {
+            for (x in 0 until width) {
                 val index = y * width + x
                 scoreText[index] = output.getFloat()
             }
         }
 
-        for (y in 0 until height)
-        {
-            for (x in 0 until width)
-            {
+        for (y in 0 until height) {
+            for (x in 0 until width) {
                 val index = y * width + x
                 scoreLink[index] = output.getFloat()
             }
         }
 
         // Simple threshold-based detection for proof of concept
-        // Find connected components above text threshold
         val regions = mutableListOf<RectF>()
         val visited = Array(height) { BooleanArray(width) }
 
@@ -252,8 +250,11 @@ class EasyocrDetector(private val context: Context)
         return regions
     }
 
-    /**
-     * Finds a connected region starting from the given point.
+
+        /**
+     * Looks at individual pixels and expands outwards, adding a pixel to a "region" if it meets the score threshold.
+     * Returns bounding box which encompasses all of the connected pixels.
+     * In other words, finds boxes enclosing text based on pixels.
      */
     private fun findConnectedRegion(
         startX: Int,
@@ -273,6 +274,10 @@ class EasyocrDetector(private val context: Context)
         var minY = startY
         var maxX = startX
         var maxY = startY
+
+        // Max vertical distance between pixels to consider them part of the same region
+        // Idea is to ensure boxes to not span multiple lines
+        val maxVerticalDistance = 10
 
         while (queue.isNotEmpty())
         {
@@ -298,8 +303,13 @@ class EasyocrDetector(private val context: Context)
                     // Connect if text score or link score is high enough
                     if (scoreText[index] > detectorConfig.lowText || scoreLink[index] > detectorConfig.linkThreshold)
                     {
-                        queue.add(Pair(nx, ny))
-                        visited[ny][nx] = true
+                        // This tries to ensure boxes don't span multiple lines
+                        if (abs(ny - startY) <= maxVerticalDistance)
+                        {
+                            queue.add(Pair(nx, ny))
+                            visited[ny][nx] = true
+                        }
+
                     }
                 }
             }
@@ -322,7 +332,10 @@ class EasyocrDetector(private val context: Context)
         val yCenterThreshold: Float,
         val heightThreshold: Float,
         val widthThreshold: Float,
-        val addMargin: Float
+        val addMargin: Float,
+        val horizontalMergeThreshold: Float, // How far boxes are away from each other before merging
+        val maxHeightThreshold : Float, // Limits how tall merged boxes get
+        val verticalMergeThreshold : Float, // Are 2 regions close enough to be considered part of the same text block?
     )
 
 
