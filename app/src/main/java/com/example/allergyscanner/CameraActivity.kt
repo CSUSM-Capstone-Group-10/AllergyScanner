@@ -1,12 +1,19 @@
 package com.example.allergyscanner
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.allergytest.databinding.ActivityCameraBinding
 import java.io.File
@@ -21,15 +28,32 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var imageCapture: ImageCapture
 
+    // 1) Permission request code constant
+    private val CAMERA_PERMISSION_REQUEST_CODE = 1001
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-        startCamera(binding.cameraPreview)
 
-        //Navigation bar functionality
+        // 2) Check if the camera permission is granted. If yes, start camera. If not, request.
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startCamera(binding.cameraPreview)
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST_CODE
+            )
+        }
+
+        // Navigation bar functionality
         binding.navAllergens.setOnClickListener {
             startActivity(Intent(this, MainActivity::class.java))
         }
@@ -40,7 +64,7 @@ class CameraActivity : AppCompatActivity() {
             startActivity(Intent(this, ResultsActivity::class.java))
         }
 
-        //Capture button
+        // Capture button
         binding.captureButton.setOnClickListener {
             takePhoto()
         }
@@ -69,7 +93,7 @@ class CameraActivity : AppCompatActivity() {
 
     private fun takePhoto() {
         val photoFile = File(
-            getExternalFilesDir(null), //Store image safely
+            getExternalFilesDir(null),
             "IMG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())}.jpg"
         )
 
@@ -82,11 +106,11 @@ class CameraActivity : AppCompatActivity() {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     Log.d("CameraX", "Image saved at: ${photoFile.absolutePath}")
 
-                    //Send the image to CropActivity instead of ResultsActivity
+                    //Send the image to CropActivity
                     val intent = Intent(this@CameraActivity, CropActivity::class.java)
                     intent.putExtra("imagePath", photoFile.absolutePath)
                     startActivity(intent)
-                    finish() //Close CameraActivity after taking the picture
+                    finish()
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -95,6 +119,24 @@ class CameraActivity : AppCompatActivity() {
             })
     }
 
+    // 3) Handle the result of the permission request dialog
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted => start camera
+                startCamera(binding.cameraPreview)
+            } else {
+                // Permission denied => show a toast, or handle gracefully
+                Toast.makeText(this, "Camera permission denied.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
