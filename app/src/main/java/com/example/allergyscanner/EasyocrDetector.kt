@@ -4,9 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.Paint
 import android.graphics.RectF
 import android.util.Log
 import org.tensorflow.lite.Interpreter
@@ -40,9 +37,9 @@ class EasyocrDetector(private val context: Context)
         yCenterThreshold = 0.5f,
         heightThreshold = 0.01f,
         widthThreshold = 0.2f,
-        addMargin = 0.1f,
+        addMargin = 0.3f,
         horizontalMergeThreshold = 0.9f,
-        maxHeightThreshold = 0.9f,
+        maxHeightThreshold = 100f,
         verticalMergeThreshold = 0.5f
     )
 
@@ -256,69 +253,63 @@ class EasyocrDetector(private val context: Context)
      * Returns bounding box which encompasses all of the connected pixels.
      * In other words, finds boxes enclosing text based on pixels.
      */
-    private fun findConnectedRegion(
-        startX: Int,
-        startY: Int,
-        scoreText: FloatArray,
-        scoreLink: FloatArray,
-        width: Int,
-        height: Int,
-        visited: Array<BooleanArray>
-    ):
-            RectF
-    {
-        val queue = mutableListOf(Pair(startX, startY))
-        visited[startY][startX] = true
+        private fun findConnectedRegion(
+            startX: Int,
+            startY: Int,
+            scoreText: FloatArray,
+            scoreLink: FloatArray,
+            width: Int,
+            height: Int,
+            visited: Array<BooleanArray>
+        ): RectF {
+            val queue = mutableListOf(Pair(startX, startY))
+            visited[startY][startX] = true
 
-        var minX = startX
-        var minY = startY
-        var maxX = startX
-        var maxY = startY
+            var minX = startX
+            var minY = startY
+            var maxX = startX
+            var maxY = startY
 
-        // Max vertical distance between pixels to consider them part of the same region
-        // Idea is to ensure boxes to not span multiple lines
-        val maxVerticalDistance = 10
+            // Max vertical distance between pixels to consider them part of the same region
+            // Ensures only one line of text is captured (adjustable based on line height in images)
+            val maxVerticalDistance = 10 // Adjust as needed to fine-tune height
 
-        while (queue.isNotEmpty())
-        {
-            val (x, y) = queue.removeAt(0)
+            while (queue.isNotEmpty()) {
+                val (x, y) = queue.removeAt(0)
 
-            // Update region bounds
-            minX = min(minX, x)
-            minY = min(minY, y)
-            maxX = max(maxX, x)
-            maxY = max(maxY, y)
+                // Update region bounds
+                minX = min(minX, x)
+                minY = min(minY, y)
+                maxX = max(maxX, x)
+                maxY = max(maxY, y)
 
-            // Check 4 neighbors
-            val neighbors = listOf(
-                Pair(x+1, y), Pair(x-1, y), Pair(x, y+1), Pair(x, y-1)
-            )
+                // Check 4 neighbors
+                val neighbors = listOf(
+                    Pair(x + 1, y), Pair(x - 1, y), Pair(x, y + 1), Pair(x, y - 1)
+                )
 
-            for ((nx, ny) in neighbors)
-            {
-                if (nx in 0 until width && ny in 0 until height && !visited[ny][nx])
-                {
-                    val index = ny * width + nx
+                for ((nx, ny) in neighbors) {
+                    if (nx in 0 until width && ny in 0 until height && !visited[ny][nx]) {
+                        val index = ny * width + nx
 
-                    // Connect if text score or link score is high enough
-                    if (scoreText[index] > detectorConfig.lowText || scoreLink[index] > detectorConfig.linkThreshold)
-                    {
-                        // This tries to ensure boxes don't span multiple lines
-                        if (abs(ny - startY) <= maxVerticalDistance)
-                        {
-                            queue.add(Pair(nx, ny))
-                            visited[ny][nx] = true
+                        // Connect if text score or link score is high enough
+                        if (scoreText[index] > detectorConfig.lowText || scoreLink[index] > detectorConfig.linkThreshold) {
+                            // Enforce one-line height constraint based on vertical distance from the starting pixel
+                            if (abs(ny - startY) <= maxVerticalDistance) {
+                                queue.add(Pair(nx, ny))
+                                visited[ny][nx] = true
+                            }
                         }
-
                     }
                 }
             }
+
+            // Ensure the bounding box is within one line's height but can span multiple words in width
+            return RectF(minX.toFloat(), minY.toFloat(), maxX.toFloat(), minY.toFloat() + detectorConfig.maxHeightThreshold)
         }
 
-        return RectF(minX.toFloat(), minY.toFloat(), maxX.toFloat(), maxY.toFloat())
-    }
 
-    /**
+        /**
      * Configuration for detector parameters.
      */
     data class DetectorConfig
