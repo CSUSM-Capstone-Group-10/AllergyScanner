@@ -15,7 +15,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class EasyocrDetector(private val context: Context)
-    {
+{
     private var detectorInterpreter: Interpreter? = null
     private val ModelUtilityFunctions by lazy { ModelUtilityFunctions() }
     private val TAG = "ImageProcessor"
@@ -37,14 +37,14 @@ class EasyocrDetector(private val context: Context)
         yCenterThreshold = 0.5f,
         heightThreshold = 0.01f,
         widthThreshold = 0.2f,
-        addMargin = 0.3f,
+        addMargin = 0.2f,
         horizontalMergeThreshold = 0.9f,
-        maxHeightThreshold = 100f,
+        maxHeightThreshold = 150f,
         verticalMergeThreshold = 0.5f
     )
 
 
-        var isInitialized = false
+    var isInitialized = false
         private set
 
     @Throws(IOException::class)
@@ -71,7 +71,7 @@ class EasyocrDetector(private val context: Context)
         Log.d(TAG, "Initialized detector")
     }
 
-    fun runModel(bitmap: Bitmap): List<RectF>
+    fun runModel(bitmap: Bitmap): Pair<List<RectF>, Bitmap>
     {
         // Preprocess the image and prepare input for the model
         val preparedInput =  prepareDetectorInput(bitmap)
@@ -85,7 +85,7 @@ class EasyocrDetector(private val context: Context)
         Log.d(TAG, "Detected ${postprocessedResult.size} text regions")
         ModelUtilityFunctions.saveBitmapToCache(ModelUtilityFunctions.drawRegionsOnImage(preparedInput.second, postprocessedResult), context, "image_with_regions.png")
         //asdf
-        return postprocessedResult
+        return Pair(postprocessedResult, preparedInput.second)
     }
 
     /**
@@ -133,31 +133,31 @@ class EasyocrDetector(private val context: Context)
         return Pair(buffer, resized)
     }
 
-        private fun resizeWithPadding(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-            val aspectRatio = bitmap.width.toFloat() / bitmap.height
-            val targetAspectRatio = targetWidth.toFloat() / targetHeight
+    private fun resizeWithPadding(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+        val aspectRatio = bitmap.width.toFloat() / bitmap.height
+        val targetAspectRatio = targetWidth.toFloat() / targetHeight
 
-            val scaleWidth: Int
-            val scaleHeight: Int
-            if (aspectRatio > targetAspectRatio) {
-                scaleWidth = targetWidth
-                scaleHeight = (targetWidth / aspectRatio).toInt()
-            } else {
-                scaleHeight = targetHeight
-                scaleWidth = (targetHeight * aspectRatio).toInt()
-            }
-
-            val resized = Bitmap.createScaledBitmap(bitmap, scaleWidth, scaleHeight, true)
-            val outputBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(outputBitmap)
-            canvas.drawColor(Color.WHITE) // Padding color
-            canvas.drawBitmap(resized, ((targetWidth - scaleWidth) / 2).toFloat(), ((targetHeight - scaleHeight) / 2).toFloat(), null)
-
-            return outputBitmap
+        val scaleWidth: Int
+        val scaleHeight: Int
+        if (aspectRatio > targetAspectRatio) {
+            scaleWidth = targetWidth
+            scaleHeight = (targetWidth / aspectRatio).toInt()
+        } else {
+            scaleHeight = targetHeight
+            scaleWidth = (targetHeight * aspectRatio).toInt()
         }
 
+        val resized = Bitmap.createScaledBitmap(bitmap, scaleWidth, scaleHeight, true)
+        val outputBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(outputBitmap)
+        canvas.drawColor(Color.WHITE) // Padding color
+        canvas.drawBitmap(resized, ((targetWidth - scaleWidth) / 2).toFloat(), ((targetHeight - scaleHeight) / 2).toFloat(), null)
 
-        /**
+        return outputBitmap
+    }
+
+
+    /**
      * Runs the detector model on the prepared input.
      */
     private fun runDetector(input: ByteBuffer): ByteBuffer
@@ -248,72 +248,72 @@ class EasyocrDetector(private val context: Context)
     }
 
 
-        /**
+    /**
      * Looks at individual pixels and expands outwards, adding a pixel to a "region" if it meets the score threshold.
      * Returns bounding box which encompasses all of the connected pixels.
      * In other words, finds boxes enclosing text based on pixels.
      */
-        private fun findConnectedRegion(
-            startX: Int,
-            startY: Int,
-            scoreText: FloatArray,
-            scoreLink: FloatArray,
-            width: Int,
-            height: Int,
-            visited: Array<BooleanArray>
-        ): RectF {
-            val queue = mutableListOf(Pair(startX, startY))
-            visited[startY][startX] = true
+    private fun findConnectedRegion(
+        startX: Int,
+        startY: Int,
+        scoreText: FloatArray,
+        scoreLink: FloatArray,
+        width: Int,
+        height: Int,
+        visited: Array<BooleanArray>
+    ): RectF {
+        val queue = mutableListOf(Pair(startX, startY))
+        visited[startY][startX] = true
 
-            var minX = startX
-            var minY = startY
-            var maxX = startX
-            var maxY = startY
+        var minX = startX
+        var minY = startY
+        var maxX = startX
+        var maxY = startY
 
-            // Max vertical distance between pixels to consider them part of the same region
-            // Ensures only one line of text is captured (adjustable based on line height in images)
-            val maxVerticalDistance = 10 // Adjust as needed to fine-tune height
+        // Max vertical distance between pixels to consider them part of the same region
+        // Ensures only one line of text is captured (adjustable based on line height in images)
+        val maxVerticalDistance = 10 // Adjust as needed to fine-tune height
 
-            while (queue.isNotEmpty()) {
-                val (x, y) = queue.removeAt(0)
+        while (queue.isNotEmpty()) {
+            val (x, y) = queue.removeAt(0)
 
-                // Update region bounds
-                minX = min(minX, x)
-                minY = min(minY, y)
-                maxX = max(maxX, x)
-                maxY = max(maxY, y)
+            // Update region bounds
+            minX = min(minX, x)
+            minY = min(minY, y)
+            maxX = max(maxX, x)
+            maxY = max(maxY, y)
 
-                // Check 4 neighbors
-                val neighbors = listOf(
-                    Pair(x + 1, y), Pair(x - 1, y), Pair(x, y + 1), Pair(x, y - 1)
-                )
+            // Check 4 neighbors
+            val neighbors = listOf(
+                Pair(x + 1, y), Pair(x - 1, y), Pair(x, y + 1), Pair(x, y - 1)
+            )
 
-                for ((nx, ny) in neighbors) {
-                    if (nx in 0 until width && ny in 0 until height && !visited[ny][nx]) {
-                        val index = ny * width + nx
+            for ((nx, ny) in neighbors) {
+                if (nx in 0 until width && ny in 0 until height && !visited[ny][nx]) {
+                    val index = ny * width + nx
 
-                        // Connect if text score or link score is high enough
-                        if (scoreText[index] > detectorConfig.lowText || scoreLink[index] > detectorConfig.linkThreshold) {
-                            // Enforce one-line height constraint based on vertical distance from the starting pixel
-                            if (abs(ny - startY) <= maxVerticalDistance) {
-                                queue.add(Pair(nx, ny))
-                                visited[ny][nx] = true
-                            }
+                    // Connect if text score or link score is high enough
+                    if (scoreText[index] > detectorConfig.lowText || scoreLink[index] > detectorConfig.linkThreshold) {
+                        // Enforce one-line height constraint based on vertical distance from the starting pixel
+                        if (abs(ny - startY) <= maxVerticalDistance) {
+                            queue.add(Pair(nx, ny))
+                            visited[ny][nx] = true
                         }
                     }
                 }
             }
-
-            // Ensure the bounding box is within one line's height but can span multiple words in width
-            return RectF(minX.toFloat(), minY.toFloat(), maxX.toFloat(), minY.toFloat() + detectorConfig.maxHeightThreshold)
         }
 
+        // Ensure the bounding box is within one line's height but can span multiple words in width
+        return RectF(minX.toFloat(), minY.toFloat(), maxX.toFloat(), minY.toFloat() + detectorConfig.maxHeightThreshold)
+    }
 
-        /**
+
+    /**
      * Configuration for detector parameters.
      */
     data class DetectorConfig
-    (
+        (
         val textThreshold: Float,
         val linkThreshold: Float,
         val lowText: Float,

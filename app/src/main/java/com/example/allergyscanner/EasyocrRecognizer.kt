@@ -307,7 +307,7 @@ class EasyocrRecognizer(private val context: Context) {
      * Configuration for recognizer parameters.
      */
     data class RecognizerConfig
-    (
+        (
         val beamWidth: Int,
         val contrastThreshold: Float,
         val adjustContrast: Float,

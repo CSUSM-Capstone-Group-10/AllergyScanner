@@ -42,13 +42,13 @@ class ImageProcessor(private val context: Context)
 
         try
         {
-            val detectedTextRegions = EasyocrDetector.runModel(bitmap)
-
+            val detResults = EasyocrDetector.runModel(bitmap)
+            val detectedTextRegions = detResults.first
             // If no text regions are detected, have the OCR attempt extracting text from the entire image
             if (detectedTextRegions.isEmpty())
             {
                 Log.d(TAG, "No text regions detected, attempting to extract text from entire image")
-                val fallbackText = EasyocrRecognizer.runModelFallback(bitmap)
+                val fallbackText = EasyocrRecognizer.runModelFallback(detResults.second)
                 Log.d(TAG, "Text extracted from full image: $fallbackText")
                 return "Full image: $fallbackText"
             }
@@ -59,7 +59,7 @@ class ImageProcessor(private val context: Context)
             // iterate over each detected text region/box
             for ((index, region) in detectedTextRegions.withIndex())
             {
-                val croppedRegion = ModelUtilityFunctions.cropTextRegion(bitmap, region)
+                val croppedRegion = ModelUtilityFunctions.cropTextRegion(detResults.second, region)
                 // saveBitmapToCache(croppedRegion, context, "cropped_region$index.png") // This looks OK
 
                 val recognizerOutputText = EasyocrRecognizer.runModel(croppedRegion, index)
