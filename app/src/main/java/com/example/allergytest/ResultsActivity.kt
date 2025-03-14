@@ -16,17 +16,17 @@ class ResultsActivity : AppCompatActivity() {
         binding = ActivityResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✅ Get cropped image URI from intent
+        // Get cropped image URI from intent
         val croppedImageUri = intent.getStringExtra("croppedImageUri")
 
         if (!croppedImageUri.isNullOrEmpty()) {
             val imageUri = Uri.parse(croppedImageUri)
-            binding.resultImage.setImageURI(imageUri) // ✅ Correctly display cropped image
+            binding.resultImage.setImageURI(imageUri) //Correctly display cropped image
         } else {
             Toast.makeText(this, "No image found. Please take a picture first.", Toast.LENGTH_LONG).show()
         }
 
-        // ✅ Load selected allergens
+        //Load selected allergens
         val selectedAllergens = SelectionManager.loadSelections(this)
         if (selectedAllergens.isEmpty()) {
             binding.resultList.text = "No allergens selected."
@@ -34,7 +34,7 @@ class ResultsActivity : AppCompatActivity() {
             binding.resultList.text = "Selected Allergens:\n" + selectedAllergens.joinToString("\n")
         }
 
-        // ✅ Set up navigation buttons
+        //Set up navigation buttons
         binding.navAllergens.setOnClickListener {
             startActivity(Intent(this, MainActivity::class.java))
         }

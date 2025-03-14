@@ -13,7 +13,7 @@ class CropActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ Get the image path from CameraActivity
+        // Get the image path from CameraActivity
         val imagePath = intent.getStringExtra("imagePath")
         if (imagePath == null) {
             Log.e("CropActivity", "No image path received!")
@@ -30,7 +30,7 @@ class CropActivity : AppCompatActivity() {
 
         Log.d("CropActivity", "Received image path: $imagePath")
 
-        // ✅ Set up UCrop
+        //Set up UCrop
         val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
         UCrop.of(Uri.fromFile(imageFile), destinationUri)
             .withAspectRatio(1f, 1f) // Set desired crop ratio
@@ -46,11 +46,11 @@ class CropActivity : AppCompatActivity() {
             if (resultUri != null) {
                 Log.d("CropActivity", "Cropped image URI: $resultUri")
 
-                // ✅ Send the cropped image to ResultsActivity
+                //Send the cropped image to ResultsActivity
                 val intent = Intent(this, ResultsActivity::class.java)
                 intent.putExtra("croppedImageUri", resultUri.toString())
                 startActivity(intent)
-                finish() // ✅ Close CropActivity after cropping
+                finish() // Close CropActivity after cropping
             }
         } else if (requestCode == UCrop.REQUEST_CROP) {
             Log.e("CropActivity", "Cropping canceled!")

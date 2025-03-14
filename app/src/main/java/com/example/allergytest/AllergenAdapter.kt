@@ -12,7 +12,7 @@ import android.widget.ExpandableListView
 class AllergenAdapter(
     private val context: Context,
     private val allergenCategories: List<AllergenCategory>,
-    private val expandableListView: ExpandableListView // ✅ Pass ExpandableListView for expanding/collapsing
+    private val expandableListView: ExpandableListView //Pass ExpandableListView for expanding/collapsing
 ) : BaseExpandableListAdapter() {
 
     override fun getGroup(groupPosition: Int): Any = allergenCategories[groupPosition]
@@ -60,7 +60,7 @@ class AllergenAdapter(
         itemName.text = item.name
         itemCheckbox.isChecked = item.isSelected
 
-        // ✅ Handle individual item selection
+        //Handle individual item selection
         itemCheckbox.setOnClickListener {
             item.isSelected = itemCheckbox.isChecked
         }

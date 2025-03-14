@@ -23,20 +23,20 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✅ Load previously saved selections
+        //Load previously saved selections
         loadSelectedAllergens()
 
-        // ✅ Keep existing allergen selection functionality
+        //Keep existing allergen selection functionality
         val adapter = AllergenAdapter(this, allergens, binding.allergenExpandableList)
         binding.allergenExpandableList.setAdapter(adapter)
 
-        // ✅ Set up Save Button functionality
+        //Set up Save Button functionality
         val saveButton: Button = findViewById(R.id.saveButton)
         saveButton.setOnClickListener {
             saveSelectedAllergens()
         }
 
-        // ✅ Bottom Navigation Setup
+        //Bottom Navigation Setup
         val navAllergens: ImageView = findViewById(R.id.navAllergens)
         val navCamera: ImageView = findViewById(R.id.navCamera)
         val navResults: ImageView = findViewById(R.id.navResults)
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Save Selected Allergens to SharedPreferences
+    //Save Selected Allergens to SharedPreferences
     private fun saveSelectedAllergens() {
         val sharedPreferences = getSharedPreferences("AllergenPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -67,11 +67,11 @@ class MainActivity : AppCompatActivity() {
         editor.putStringSet("selectedAllergens", selectedAllergens.toSet())
         editor.apply()
 
-        // ✅ Show a confirmation message
+        // Show a confirmation message
         Toast.makeText(this, "Allergen selection saved!", Toast.LENGTH_SHORT).show()
     }
 
-    // ✅ Load Previously Saved Allergens
+    //Load Previously Saved Allergens
     private fun loadSelectedAllergens() {
         val sharedPreferences = getSharedPreferences("AllergenPrefs", Context.MODE_PRIVATE)
         val savedAllergens = sharedPreferences.getStringSet("selectedAllergens", emptySet()) ?: emptySet()
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             category.items.forEach { subItem ->
                 subItem.isSelected = savedAllergens.contains(subItem.name)
             }
-            category.isSelected = category.items.all { it.isSelected } // ✅ If all subitems are selected, check category
+            category.isSelected = category.items.all { it.isSelected } //If all subitems are selected, check category
         }
     }
 }

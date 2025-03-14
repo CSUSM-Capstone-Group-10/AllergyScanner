@@ -30,7 +30,7 @@ class CameraActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         startCamera(binding.cameraPreview)
 
-        // ✅ Navigation bar functionality
+        //Navigation bar functionality
         binding.navAllergens.setOnClickListener {
             startActivity(Intent(this, MainActivity::class.java))
         }
@@ -41,7 +41,7 @@ class CameraActivity : AppCompatActivity() {
             startActivity(Intent(this, ResultsActivity::class.java))
         }
 
-        // ✅ Capture button
+        //Capture button
         binding.captureButton.setOnClickListener {
             takePhoto()
         }
@@ -70,7 +70,7 @@ class CameraActivity : AppCompatActivity() {
 
     private fun takePhoto() {
         val photoFile = File(
-            getExternalFilesDir(null), // ✅ Store image safely
+            getExternalFilesDir(null), //Store image safely
             "IMG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())}.jpg"
         )
 
@@ -83,11 +83,11 @@ class CameraActivity : AppCompatActivity() {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     Log.d("CameraX", "Image saved at: ${photoFile.absolutePath}")
 
-                    // ✅ Send the image to CropActivity instead of ResultsActivity
+                    //Send the image to CropActivity instead of ResultsActivity
                     val intent = Intent(this@CameraActivity, CropActivity::class.java)
                     intent.putExtra("imagePath", photoFile.absolutePath)
                     startActivity(intent)
-                    finish() // ✅ Close CameraActivity after taking the picture
+                    finish() //Close CameraActivity after taking the picture
                 }
 
                 override fun onError(exception: ImageCaptureException) {
