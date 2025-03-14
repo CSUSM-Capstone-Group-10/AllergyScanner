@@ -1,4 +1,4 @@
-package com.example.allergytest
+package com.example.allergyscanner
 
 import android.content.Intent
 import android.net.Uri
@@ -46,11 +46,12 @@ class CropActivity : AppCompatActivity() {
             if (resultUri != null) {
                 Log.d("CropActivity", "Cropped image URI: $resultUri")
 
-                //Send the cropped image to ResultsActivity
-                val intent = Intent(this, ResultsActivity::class.java)
+                // Instead of going to ResultsActivity directly,
+                // we now go to TextDetectionActivity
+                val intent = Intent(this, TextDetectionActivity::class.java)
                 intent.putExtra("croppedImageUri", resultUri.toString())
                 startActivity(intent)
-                finish() // Close CropActivity after cropping
+                finish() // Close CropActivity
             }
         } else if (requestCode == UCrop.REQUEST_CROP) {
             Log.e("CropActivity", "Cropping canceled!")

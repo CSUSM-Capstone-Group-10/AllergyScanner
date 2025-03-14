@@ -1,4 +1,4 @@
-package com.example.allergytest
+package com.example.allergyscanner
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.allergytest.R
 import com.example.allergytest.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {

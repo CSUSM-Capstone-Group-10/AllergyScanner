@@ -1,4 +1,4 @@
-package com.example.allergytest
+package com.example.allergyscanner
 
 import android.content.Context
 

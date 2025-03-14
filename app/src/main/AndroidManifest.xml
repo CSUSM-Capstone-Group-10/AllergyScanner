@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ✅ Permissions for Camera & Storage Access -->
+    <!-- Permissions for Camera & Storage Access -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -22,9 +22,9 @@
         android:theme="@style/Theme.AllergyTest"
         tools:targetApi="31">
 
-        <!-- ✅ MainActivity (App Launch) -->
+        <!-- MainActivity (App Launch) -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.allergyscanner.MainActivity"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>
@@ -33,13 +33,25 @@
             </intent-filter>
         </activity>
 
-        <!-- ✅ Other Activities -->
-        <activity android:name=".CameraActivity" android:exported="false"/>
-        <activity android:name=".CropActivity" android:exported="false"/>
-        <activity android:name=".ResultsActivity" android:exported="false"/>
+        <!-- Other Activities -->
+        <activity
+            android:name="com.example.allergyscanner.CameraActivity"
+            android:exported="false"/>
+        <activity
+            android:name="com.example.allergyscanner.CropActivity"
+            android:exported="false"/>
+        <activity
+            android:name="com.example.allergyscanner.ResultsActivity"
+            android:exported="false"/>
 
-        <!-- ✅ Add UCropActivity (Required for Cropping to Work) -->
-        <activity android:name="com.yalantis.ucrop.UCropActivity"
+        <!-- Newly added TextDetectionActivity -->
+        <activity
+            android:name="com.example.allergyscanner.TextDetectionActivity"
+            android:exported="false"/>
+
+        <!-- UCropActivity (Required for Cropping to Work) -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 

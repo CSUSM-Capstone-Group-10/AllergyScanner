@@ -1,4 +1,4 @@
-package com.example.allergytest
+package com.example.allergyscanner
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -8,6 +8,7 @@ import android.widget.BaseExpandableListAdapter
 import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.ExpandableListView
+import com.example.allergytest.R
 
 class AllergenAdapter(
     private val context: Context,

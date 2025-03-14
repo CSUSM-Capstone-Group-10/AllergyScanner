@@ -1,4 +1,4 @@
-package com.example.allergytest
+package com.example.allergyscanner
 
 data class AllergenCategory(
     val name: String,
