@@ -15,7 +15,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.allergytest.R
 import com.example.allergytest.databinding.ActivityCameraBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -53,15 +55,28 @@ class CameraActivity : AppCompatActivity() {
             )
         }
 
-        // Navigation bar functionality
-        binding.navAllergens.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
-        binding.navCamera.setOnClickListener {
-            // Already on CameraActivity
-        }
-        binding.navResults.setOnClickListener {
-            startActivity(Intent(this, ResultsActivity::class.java))
+        // Bottom Navigation Setup
+        val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottomNav)
+        bottomNavigationView.selectedItemId = R.id.navCamera
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navAllergens -> {
+                    // Handle "Allergens" selection
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+                R.id.navCamera -> {
+                    // Handle "Camera" selection
+                    startActivity(Intent(this, CameraActivity::class.java))
+                    true
+                }
+                R.id.navResults -> {
+                    // Handle "Results" selection
+                    startActivity(Intent(this, ResultsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
 
         // Capture button

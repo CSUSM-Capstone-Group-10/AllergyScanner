@@ -5,7 +5,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.allergytest.R
 import com.example.allergytest.databinding.ActivityResultsBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class ResultsActivity : AppCompatActivity() {
 
@@ -67,15 +69,28 @@ class ResultsActivity : AppCompatActivity() {
             binding.allergenWarning.text = "No selected allergens found in text."
         }
 
-        //Set up navigation buttons
-        binding.navAllergens.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
-        binding.navCamera.setOnClickListener {
-            startActivity(Intent(this, CameraActivity::class.java))
-        }
-        binding.navResults.setOnClickListener {
-            Toast.makeText(this, "You are already on the Results page", Toast.LENGTH_SHORT).show()
+        // Bottom Navigation Setup
+        val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottomNav)
+        bottomNavigationView.selectedItemId = R.id.navResults
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navAllergens -> {
+                    // Handle "Allergens" selection
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+                R.id.navCamera -> {
+                    // Handle "Camera" selection
+                    startActivity(Intent(this, CameraActivity::class.java))
+                    true
+                }
+                R.id.navResults -> {
+                    // Handle "Results" selection
+                    startActivity(Intent(this, ResultsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
     }
 }

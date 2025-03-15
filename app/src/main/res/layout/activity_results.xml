@@ -2,9 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="false">
 
     <!-- Display Cropped Image -->
     <ImageView
@@ -41,7 +42,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Selected Allergens"
-                android:textSize="18sp" />
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/roboto_condensed_font"
+                android:textColor="@color/md_theme_primary_highContrast"/>
 
             <TextView
                 android:id="@+id/detectedTextView"
@@ -49,53 +53,43 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Recognized text here"
-                android:textSize="16sp" />
+                android:fontFamily="@font/roboto_regular"
+                android:textSize="18sp"
+                android:textColor="@color/md_theme_onSurface"/>
 
             <TextView
                 android:id="@+id/allergenWarning"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_regular"
+                android:textStyle="bold"
                 android:layout_marginTop="8dp"
-                android:textColor="@android:color/holo_red_dark"
-                android:textSize="16sp" />
+                android:textColor="@color/md_theme_error"
+                android:textSize="18sp" />
 
         </LinearLayout>
     </ScrollView>
 
     <!-- Bottom Navigation Bar (Same Style as MainActivity) -->
-    <LinearLayout
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_onBackground"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="8dp"
-        android:background="@android:color/darker_gray"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <ImageView
-            android:id="@+id/navAllergens"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_info_details"
-            android:contentDescription="Allergens" />
-
-        <ImageView
-            android:id="@+id/navCamera"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_camera"
-            android:contentDescription="Camera" />
-
-        <ImageView
-            android:id="@+id/navResults"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:contentDescription="Results" />
-    </LinearLayout>
+        android:background="@color/md_theme_background"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemRippleColor="@android:color/transparent"
+        app:itemIconTint="@null"
+        android:paddingBottom="5dp"
+        app:labelVisibilityMode="unlabeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
