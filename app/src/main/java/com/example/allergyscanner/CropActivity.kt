@@ -32,9 +32,18 @@ class CropActivity : AppCompatActivity() {
 
         //Set up UCrop
         val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
+        // Create UCrop options
+        val options = UCrop.Options().apply {
+            setFreeStyleCropEnabled(true) // Enable free-style crop
+            setShowCropFrame(true) // Show crop frame
+            setShowCropGrid(true) // Show crop grid
+            setHideBottomControls(false) // Show bottom controls for better UX
+        }
+
+        // Start UCrop with our options
         UCrop.of(Uri.fromFile(imageFile), destinationUri)
-            .withAspectRatio(1f, 1f) // Set desired crop ratio
-            .withMaxResultSize(500, 500) // Max cropped image size
+            .withOptions(options)
+            .withMaxResultSize(1080, 1080) // Max resolution, but maintains aspect ratio of crop
             .start(this)
     }
 

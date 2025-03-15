@@ -7,70 +7,104 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
 
-    <!-- Display Cropped Image -->
-    <ImageView
-        android:id="@+id/resultImage"
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        android:layout_marginTop="?attr/actionBarSize"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_marginTop="30dp"
+        android:background="@color/md_theme_background"
+        android:title="Scan Results"
+        android:titleTextColor="@android:color/white"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"
+        app:navigationIcon="@drawable/arrow_back_24px"
+        app:menu="@menu/results_menu"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/resultScrollView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Scrollable Container -->
     <ScrollView
-        android:id="@+id/resultScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/resultImage"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNav"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav">
 
-        <!-- Only one direct child in ScrollView: a LinearLayout -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:id="@+id/resultList"
+            <ImageView
+                android:id="@+id/resultImage"
                 android:layout_width="match_parent"
+                android:layout_height="341dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="8dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="result image"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/allergyStatusBubble"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Selected Allergens"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bubble_shape_green"
+                android:gravity="center"
+                android:text="No Allergens Detected"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/detectedAllergensTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_condensed_font"
+                android:paddingTop="12dp"
+                android:text="Detected Allergens"
+                android:textColor="@color/md_theme_primary"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:fontFamily="@font/roboto_condensed_font"
-                android:textColor="@color/md_theme_primary_highContrast"/>
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/allergenWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/design_default_color_error"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/noPhotoWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/design_default_color_error"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/detectedTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Recognized text here"
                 android:fontFamily="@font/roboto_regular"
+                android:text=""
+                android:textColor="@color/md_theme_onSurface"
                 android:textSize="18sp"
-                android:textColor="@color/md_theme_onSurface"/>
+                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/allergenWarning"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/roboto_regular"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/md_theme_error"
-                android:textSize="18sp" />
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation Bar (Same Style as MainActivity) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
