@@ -13,22 +13,22 @@ class CropActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Get the image path from CameraActivity
-        val imagePath = intent.getStringExtra("imagePath")
-        if (imagePath == null) {
+        // Get the image URI from CameraActivity
+        val imageUriString = intent.getStringExtra("imageUri")
+        if (imageUriString == null) {
             Log.e("CropActivity", "No image path received!")
             finish()
             return
         }
 
-        val imageFile = File(imagePath)
-        if (!imageFile.exists()) {
-            Log.e("CropActivity", "Image file does not exist: $imagePath")
+        val imageUri = Uri.parse(imageUriString)
+        if (imageUri == null) {
+            Log.e("CropActivity", "Image file does not exist: $imageUriString")
             finish()
             return
         }
 
-        Log.d("CropActivity", "Received image path: $imagePath")
+        Log.d("CropActivity", "Received image path: $imageUri")
 
         //Set up UCrop
         val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
@@ -41,11 +41,12 @@ class CropActivity : AppCompatActivity() {
         }
 
         // Start UCrop with our options
-        UCrop.of(Uri.fromFile(imageFile), destinationUri)
+        UCrop.of(imageUri, destinationUri)
             .withOptions(options)
             .withMaxResultSize(1080, 1080) // Max resolution, but maintains aspect ratio of crop
             .start(this)
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

@@ -3,6 +3,7 @@ package com.example.allergyscanner
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.allergytest.R
@@ -81,7 +82,10 @@ class ResultsActivity : AppCompatActivity() {
                 this,
                 "No image found. Please take a picture first.",
                 Toast.LENGTH_LONG
-            ).show()
+            ).apply {
+                setGravity(Gravity.TOP, 0, 0) // This centers the toast on the screen
+                show()
+            }
 
             // If no image, hide allergen warning
             binding.allergenWarning.visibility = android.view.View.GONE

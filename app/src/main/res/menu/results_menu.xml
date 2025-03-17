@@ -4,7 +4,7 @@
     <!-- Save Scan Result -->
     <item
         android:id="@+id/action_save"
-        android:icon="@drawable/bookmark_24px"
+        android:icon="@drawable/save_button_selector"
         android:title=""
         app:showAsAction="ifRoom" />
 </menu>

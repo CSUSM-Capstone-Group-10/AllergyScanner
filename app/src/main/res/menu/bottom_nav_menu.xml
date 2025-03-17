@@ -3,17 +3,17 @@
 
     <item
         android:id="@+id/navAllergens"
-        android:icon="@drawable/home_24px"
+        android:icon="@drawable/home_button_selector"
         android:title="" />
 
     <item
         android:id="@+id/navCamera"
-        android:icon="@drawable/photo_camera_24px"
+        android:icon="@drawable/camera_selector"
         android:title="" />
 
     <item
         android:id="@+id/navResults"
-        android:icon="@drawable/manage_search_24px"
+        android:icon="@drawable/search_results_button_selector"
         android:title="" />
 
 </menu>

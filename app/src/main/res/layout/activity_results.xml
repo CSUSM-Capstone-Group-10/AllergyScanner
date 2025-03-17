@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
@@ -17,7 +16,7 @@
         android:title="Scan Results"
         android:titleTextColor="@android:color/white"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"
-        app:navigationIcon="@drawable/arrow_back_24px"
+        app:navigationIcon="@drawable/back_arrow_button"
         app:menu="@menu/results_menu"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,11 +38,10 @@
                 android:id="@+id/resultImage"
                 android:layout_width="match_parent"
                 android:layout_height="341dp"
-                android:layout_centerHorizontal="true"
                 android:layout_marginBottom="8dp"
                 android:adjustViewBounds="true"
                 android:contentDescription="result image"
-                android:scaleType="centerCrop"
+                android:scaleType="fitCenter"
                 android:visibility="gone" />
 
             <TextView

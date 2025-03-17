@@ -18,7 +18,7 @@
     <color name="md_theme_background">#FCF8F7</color>
     <color name="md_theme_onBackground">#D3D3D3</color>
     <color name="md_theme_surface">#FCF8F7</color>
-    <color name="md_theme_onSurface">#1C1B1B</color>
+    <color name="md_theme_onSurface">#101010</color>
     <color name="md_theme_surfaceVariant">#E1E4D5</color>
     <color name="md_theme_onSurfaceVariant">#44483D</color>
     <color name="md_theme_outline">#75796C</color>
