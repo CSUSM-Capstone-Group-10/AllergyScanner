@@ -62,6 +62,17 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- NEW: History icon (book icon) in the bottom-right corner above the navbar -->
+    <ImageView
+        android:id="@+id/historyIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/history_icon_desc"
+        android:src="@drawable/ic_history_book"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNav"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- Bottom Navigation Bar (Same Style as MainActivity) -->
     <LinearLayout
         android:id="@+id/bottomNav"
