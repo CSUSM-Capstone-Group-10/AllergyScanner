@@ -13,30 +13,40 @@ class CropActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Get the image path from CameraActivity
-        val imagePath = intent.getStringExtra("imagePath")
-        if (imagePath == null) {
+        // Get the image URI from CameraActivity
+        val imageUriString = intent.getStringExtra("imageUri")
+        if (imageUriString == null) {
             Log.e("CropActivity", "No image path received!")
             finish()
             return
         }
 
-        val imageFile = File(imagePath)
-        if (!imageFile.exists()) {
-            Log.e("CropActivity", "Image file does not exist: $imagePath")
+        val imageUri = Uri.parse(imageUriString)
+        if (imageUri == null) {
+            Log.e("CropActivity", "Image file does not exist: $imageUriString")
             finish()
             return
         }
 
-        Log.d("CropActivity", "Received image path: $imagePath")
+        Log.d("CropActivity", "Received image path: $imageUri")
 
         //Set up UCrop
         val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
-        UCrop.of(Uri.fromFile(imageFile), destinationUri)
-            .withAspectRatio(1f, 1f) // Set desired crop ratio
-            .withMaxResultSize(500, 500) // Max cropped image size
+        // Create UCrop options
+        val options = UCrop.Options().apply {
+            setFreeStyleCropEnabled(true) // Enable free-style crop
+            setShowCropFrame(true) // Show crop frame
+            setShowCropGrid(true) // Show crop grid
+            setHideBottomControls(false) // Show bottom controls for better UX
+        }
+
+        // Start UCrop with our options
+        UCrop.of(imageUri, destinationUri)
+            .withOptions(options)
+            .withMaxResultSize(1080, 1080) // Max resolution, but maintains aspect ratio of crop
             .start(this)
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

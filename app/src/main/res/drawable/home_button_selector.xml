@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- If the item is selected, use the filled icon -->
+    <item
+        android:drawable="@drawable/home_button_pressed" 
+        android:state_checked="true" />
+    
+    <!-- If the item is unselected, use the unfilled icon -->
+    <item
+        android:drawable="@drawable/home_button_unpressed"
+        android:state_checked="false" />
+</selector>

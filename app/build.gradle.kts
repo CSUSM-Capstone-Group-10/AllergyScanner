@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.camera2)
 
+
     implementation("org.tensorflow:tensorflow-lite:2.5.0")
 
 }

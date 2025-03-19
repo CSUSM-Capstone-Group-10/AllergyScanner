@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.allergytest.R
 import com.example.allergytest.databinding.ActivityMainBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,21 +38,31 @@ class MainActivity : AppCompatActivity() {
             saveSelectedAllergens()
         }
 
-        //Bottom Navigation Setup
-        val navAllergens: ImageView = findViewById(R.id.navAllergens)
-        val navCamera: ImageView = findViewById(R.id.navCamera)
-        val navResults: ImageView = findViewById(R.id.navResults)
 
-        navAllergens.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
 
-        navCamera.setOnClickListener {
-            startActivity(Intent(this, CameraActivity::class.java))
-        }
+        // Bottom Navigation Setup
+        val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottomNav)
+        bottomNavigationView.selectedItemId = R.id.navAllergens
 
-        navResults.setOnClickListener {
-            startActivity(Intent(this, ResultsActivity::class.java))
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navAllergens -> {
+                    // Handle "Allergens" selection
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+                R.id.navCamera -> {
+                    // Handle "Camera" selection
+                    startActivity(Intent(this, CameraActivity::class.java))
+                    true
+                }
+                R.id.navResults -> {
+                    // Handle "Results" selection
+                    startActivity(Intent(this, ResultsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
     }
 
