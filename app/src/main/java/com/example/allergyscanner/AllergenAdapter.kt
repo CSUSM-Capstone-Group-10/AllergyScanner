@@ -12,7 +12,7 @@ import com.example.allergytest.R
 
 class AllergenAdapter(
     private val context: Context,
-    private val allergenCategories: List<AllergenCategory>,
+    private val allergenCategories: MutableList<AllergenCategory>,
     private val expandableListView: ExpandableListView //Pass ExpandableListView for expanding/collapsing
 ) : BaseExpandableListAdapter() {
 
@@ -70,4 +70,10 @@ class AllergenAdapter(
     }
 
     override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean = true
+
+    fun updateData(newAllergenCategories: List<AllergenCategory>) {
+        allergenCategories.clear()
+        allergenCategories.addAll(newAllergenCategories)
+        notifyDataSetChanged()
+    }
 }

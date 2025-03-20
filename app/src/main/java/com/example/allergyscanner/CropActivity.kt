@@ -31,7 +31,8 @@ class CropActivity : AppCompatActivity() {
         Log.d("CropActivity", "Received image path: $imageUri")
 
         //Set up UCrop
-        val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
+        val timestamp = System.currentTimeMillis() // Unique timestamp (CACHES EACH IMAGE INDIVIDUALLY, SO THE HISTORY WILL SAVE EACH IMAGE)
+        val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image_$timestamp.jpg"))
         // Create UCrop options
         val options = UCrop.Options().apply {
             setFreeStyleCropEnabled(true) // Enable free-style crop

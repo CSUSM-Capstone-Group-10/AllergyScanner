@@ -50,7 +50,7 @@ class TextDetectionActivity : AppCompatActivity() {
                 MediaStore.Images.Media.getBitmap(contentResolver, croppedImageUri)
             }
 
-            // 3. Initialize ImageProcessor (which loads your TFLite models)
+            // 3. Initialize ImageProcessor
             imageProcessor = ImageProcessor(this@TextDetectionActivity)
             imageProcessor.initializeInterpreters()
 
