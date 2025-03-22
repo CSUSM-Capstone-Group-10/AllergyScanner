@@ -18,9 +18,189 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: AllergenAdapter
     private var allergens = listOf(
-        AllergenCategory("Dairy", mutableListOf(AllergenItem("Milk"), AllergenItem("Cheese"), AllergenItem("Butter"))),
-        AllergenCategory("Nuts", mutableListOf(AllergenItem("Peanuts"), AllergenItem("Walnuts"), AllergenItem("Almonds"))),
-        AllergenCategory("Seafood", mutableListOf(AllergenItem("Shrimp"), AllergenItem("Crab"), AllergenItem("Salmon")))
+        AllergenCategory(
+            "Dairy",
+            mutableListOf(
+                AllergenItem("Butter"),
+                AllergenItem("Butter Fat"),
+                AllergenItem("Butter Oil"),
+                AllergenItem("Buttermilk"),
+                AllergenItem("Artificial Butter Flavor"),
+                AllergenItem("Casein"),
+                AllergenItem("Caseinates"),
+                AllergenItem("Cheese"),
+                AllergenItem("Cream"),
+                AllergenItem("Cottage Cheese"),
+                AllergenItem("Curds"),
+                AllergenItem("Custard"),
+                AllergenItem("Ghee"),
+                AllergenItem("Half & Half"),
+                AllergenItem("Hydrolysates"),
+                AllergenItem("Lactalbumin"),
+                AllergenItem("Lactalbumin Phosphate"),
+                AllergenItem("Lactoglobulin"),
+                AllergenItem("Lactose"),
+                AllergenItem("Lactulose"),
+                AllergenItem("Milk"),
+                AllergenItem("Nougat"),
+                AllergenItem("Pudding"),
+                AllergenItem("Rennet Casein"),
+                AllergenItem("Sour Cream"),
+                AllergenItem("Sour Cream Solids"),
+                AllergenItem("Whey"),
+                AllergenItem("Yogurt")
+            )
+        ),
+        AllergenCategory(
+            "Eggs",
+            mutableListOf(
+                AllergenItem("Albumin"),
+                AllergenItem("Egg"),
+                AllergenItem("Egg Substitutes"),
+                AllergenItem("Eggnog"),
+                AllergenItem("Globulin"),
+                AllergenItem("Livetin"),
+                AllergenItem("Lysozyme"),
+                AllergenItem("Mayonnaise"),
+                AllergenItem("Meringue"),
+                AllergenItem("Ovalbumin"),
+                AllergenItem("Ovomucoid"),
+                AllergenItem("Ovovitellin"),
+                AllergenItem("Simplesse"),
+                AllergenItem("Surimi"),
+                AllergenItem("Lecithin"),
+                AllergenItem("Marzipan"),
+                AllergenItem("Marshmallows"),
+                AllergenItem("Pasta"),
+                AllergenItem("Egg Flavors")
+            )
+        ),
+        AllergenCategory(
+            "Peanuts",
+            mutableListOf(
+                AllergenItem("Beer Nuts"),
+                AllergenItem("Peanut Oil"),
+                AllergenItem("Ground Nuts"),
+                AllergenItem("Mixed Nuts"),
+                AllergenItem("Monkey Nuts"),
+                AllergenItem("Nu-Nuts Flavored Nuts"),
+                AllergenItem("Nut Pieces"),
+                AllergenItem("Peanut"),
+                AllergenItem("Peanut Butter"),
+                AllergenItem("Peanut Flour"),
+                AllergenItem("Peanut Protein"),
+                AllergenItem("Hydrolyzed Peanut Protein"),
+                AllergenItem("Egg Rolls"),
+                AllergenItem("Marzipan"),
+                AllergenItem("Nougat"),
+                AllergenItem("Sunflower Seeds"),
+            )
+        ),
+        AllergenCategory(
+            "Soybeans",
+            mutableListOf(
+                AllergenItem("Hydrolyzed Soy Protein"),
+                AllergenItem("Miso"),
+                AllergenItem("Shoyu Sauce"),
+                AllergenItem("Soy"),
+                AllergenItem("Soya"),
+                AllergenItem("Soybean"),
+                AllergenItem("Soy Protein"),
+                AllergenItem("Soy Sauce"),
+                AllergenItem("Tamari"),
+                AllergenItem("Tempeh"),
+                AllergenItem("Textured Vegetable Protein (TVP)"),
+                AllergenItem("Tofu")
+            )
+        ),
+        AllergenCategory(
+            "Tree Nuts",
+            mutableListOf(
+                AllergenItem("Almonds"),
+                AllergenItem("Brazil Nuts"),
+                AllergenItem("Caponata"),
+                AllergenItem("Cashews"),
+                AllergenItem("Chestnuts"),
+                AllergenItem("Hazelnut"),
+                AllergenItem("Gianduja"),
+                AllergenItem("Hickory Nuts"),
+                AllergenItem("Macadamia Nuts"),
+                AllergenItem("Marzipan"),
+                AllergenItem("Nougat"),
+                AllergenItem("Nu-Nut"),
+                AllergenItem("Nut Meal"),
+                AllergenItem("Nut Oil"),
+                AllergenItem("Nut Paste"),
+                AllergenItem("Nut Pieces"),
+                AllergenItem("Pecans"),
+                AllergenItem("Pesto"),
+                AllergenItem("Pine Nuts"),
+                AllergenItem("Pistachios"),
+                AllergenItem("Walnuts")
+            )
+        ),
+        AllergenCategory(
+            "Wheat",
+            mutableListOf(
+                AllergenItem("Bran"),
+                AllergenItem("Bread Crumbs"),
+                AllergenItem("Bulgar"),
+                AllergenItem("Cereal Extract"),
+                AllergenItem("Couscous"),
+                AllergenItem("Cracker Meal"),
+                AllergenItem("Durum"),
+                AllergenItem("Durum Flour"),
+                AllergenItem("Enriched Flour"),
+                AllergenItem("Farina"),
+                AllergenItem("Flour"),
+                AllergenItem("Gluten"),
+                AllergenItem("Kamut"),
+                AllergenItem("Seitan"),
+                AllergenItem("Semolina"),
+                AllergenItem("Spelt"),
+                AllergenItem("Vital Gluten"),
+                AllergenItem("Wheat"),
+                AllergenItem("Whole Wheat Berries"),
+                AllergenItem("Whole Wheat Flour")
+            )
+        ),
+        AllergenCategory(
+            "Crustaceans and Shellfish",
+            mutableListOf(
+                AllergenItem("Crab"),
+                AllergenItem("Crawfish"),
+                AllergenItem("Lobster"),
+                AllergenItem("Prawns"),
+                AllergenItem("Shrimp"),
+                AllergenItem("Snails"),
+                AllergenItem("Abalone"),
+                AllergenItem("Clams"),
+                AllergenItem("Mussels"),
+                AllergenItem("Oysters"),
+                AllergenItem("Scallops")
+            )
+        ),
+        AllergenCategory(
+            "Fish",
+            mutableListOf(
+                AllergenItem("Bass"),
+                AllergenItem("Catfish"),
+                AllergenItem("Cod"),
+                AllergenItem("Halibut"),
+                AllergenItem("Herring"),
+                AllergenItem("Mackerel"),
+                AllergenItem("Octopus"),
+                AllergenItem("Pollock"),
+                AllergenItem("Sardines"),
+                AllergenItem("Salmon"),
+                AllergenItem("Snapper"),
+                AllergenItem("Squid"),
+                AllergenItem("Swordfish"),
+                AllergenItem("Tilapia"),
+                AllergenItem("Trout"),
+                AllergenItem("Tuna")
+            )
+        ),
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
