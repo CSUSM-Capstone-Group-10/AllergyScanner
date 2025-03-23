@@ -6,68 +6,29 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
 
-    <!-- Title Text -->
-    <TextView
-        android:id="@+id/textView"
+    <!-- Tab Layout for navigation between fragments -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:fontFamily="@font/roboto_condensed_font"
-        android:gravity="start|center_vertical"
-        android:padding="15dp"
-        android:text="What are you allergic to?"
-        android:textColor="@color/md_theme_primary"
-        android:textSize="30sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/search_bar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Search allergens..."
-        android:padding="10dp"
-        android:drawableStart="@drawable/search_icon"
-        android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/textView"
+        android:background="@color/md_theme_background"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/allergenExpandableList"/>
-    <!-- Expandable ListView for allergens -->
+        app:tabGravity="fill"
+        app:tabMode="fixed" />
 
-    <ExpandableListView
-        android:id="@+id/allergenExpandableList"
-        style="@style/Theme.AllergyTest"
-        android:layout_width="0dp"
+    <!-- ViewPager to host the fragments -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:divider="@color/md_theme_onBackground"
-        android:dividerHeight="2dp"
-        android:groupIndicator="@null"
-        android:padding="15dp"
-        app:layout_constraintBottom_toTopOf="@id/saveButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintTop_toBottomOf="@id/tabLayout"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search_bar" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Bottom Navigation Bar -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/saveButton"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:fontFamily="@font/roboto_regular"
-        android:text="Save Selection"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/allergenExpandableList" />
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -75,6 +36,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
