@@ -8,6 +8,7 @@ import android.widget.BaseExpandableListAdapter
 import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.ExpandableListView
+import android.widget.ImageButton
 import com.example.allergytest.R
 
 class AllergenAdapter(
@@ -57,13 +58,24 @@ class AllergenAdapter(
         val item = getChild(groupPosition, childPosition) as AllergenItem
         val itemCheckbox = view.findViewById<CheckBox>(R.id.itemCheckbox)
         val itemName = view.findViewById<TextView>(R.id.itemName)
+        val deleteButton = view.findViewById<ImageButton>(R.id.deleteButton)
 
         itemName.text = item.name
         itemCheckbox.isChecked = item.isSelected
 
-        //Handle individual item selection
         itemCheckbox.setOnClickListener {
             item.isSelected = itemCheckbox.isChecked
+        }
+
+        val category = getGroup(groupPosition) as AllergenCategory
+        if (category.name == "Other") {
+            deleteButton.visibility = View.VISIBLE
+            deleteButton.setOnClickListener {
+                category.items.removeAt(childPosition)
+                notifyDataSetChanged()
+            }
+        } else {
+            deleteButton.visibility = View.GONE
         }
 
         return view

@@ -203,6 +203,10 @@ class AllergySelectionFragment : Fragment() {
                 AllergenItem("Tuna")
             )
         ),
+        AllergenCategory(
+            "Other",
+            mutableListOf()
+        )
     )
 
     override fun onCreateView(
@@ -230,20 +234,58 @@ class AllergySelectionFragment : Fragment() {
             saveSelectedAllergens()
         }
 
+        // Set up Add Custom Allergen functionality
+        val customInput = view.findViewById<EditText>(R.id.customAllergenInput)
+        val addButton = view.findViewById<Button>(R.id.addCustomAllergenButton)
+
+        addButton.setOnClickListener {
+            val inputText = customInput.text.toString().trim()
+            if (inputText.isNotEmpty()) {
+                // Check if allergen already exists across all categories
+                val existsInAnyCategory = allergens.any { category ->
+                    category.items.any { it.name.equals(inputText, ignoreCase = true) }
+                }
+
+                if (!existsInAnyCategory) {
+                    val otherCategory = allergens.find { it.name == "Other" }
+                    otherCategory?.items?.add(AllergenItem(inputText))
+                    adapter.updateData(allergens)
+                    val index = allergens.indexOf(otherCategory)
+                    binding.allergenExpandableList.expandGroup(index)
+                    customInput.text.clear()
+                } else {
+                    // Select the matching allergen
+                    allergens.forEach { category ->
+                        category.items.find { it.name.equals(inputText, ignoreCase = true) }?.isSelected = true
+                    }
+                    adapter.updateData(allergens)
+                    Toast.makeText(
+                        requireContext(),
+                        "\"$inputText\" already exists and has been selected",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Please enter a custom allergen", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // Search bar functionality
         val searchBar: EditText = view.findViewById(R.id.search_bar)
-        searchBar.addTextChangedListener(object: TextWatcher {
+        searchBar.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                filterAllergens(s.toString()) // Calls filter allergens function when text is changed in search bar
+                filterAllergens(s.toString())
             }
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
     }
 
+
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // Avoid memory leaks
+        _binding = null
     }
 
     // Save Selected Allergens to SharedPreferences
@@ -256,10 +298,13 @@ class AllergySelectionFragment : Fragment() {
             .filter { it.isSelected }
             .map { it.name }
 
+        val customAllergens = allergens.find { it.name == "Other" }
+            ?.items?.map { it.name }?.toSet() ?: emptySet()
+
         editor.putStringSet("selectedAllergens", selectedAllergens.toSet())
+        editor.putStringSet("customAllergens", customAllergens)
         editor.apply()
 
-        // Show a confirmation message
         Toast.makeText(requireContext(), "Allergen selection saved!", Toast.LENGTH_SHORT).show()
     }
 
@@ -267,24 +312,30 @@ class AllergySelectionFragment : Fragment() {
     private fun loadSelectedAllergens() {
         val sharedPreferences = requireActivity().getSharedPreferences("AllergenPrefs", Context.MODE_PRIVATE)
         val savedAllergens = sharedPreferences.getStringSet("selectedAllergens", emptySet()) ?: emptySet()
+        val customAllergens = sharedPreferences.getStringSet("customAllergens", emptySet()) ?: emptySet()
+
+        val otherCategory = allergens.find { it.name == "Other" }
+        customAllergens.forEach { allergen ->
+            if (otherCategory?.items?.none { it.name == allergen } == true) {
+                otherCategory.items.add(AllergenItem(allergen, allergen in savedAllergens))
+            }
+        }
 
         allergens.forEach { category ->
             category.items.forEach { subItem ->
                 subItem.isSelected = savedAllergens.contains(subItem.name)
             }
-            category.isSelected = category.items.all { it.isSelected } // If all subitems are selected, check category
+            category.isSelected = category.items.all { it.isSelected }
         }
     }
 
     private fun filterAllergens(query: String) {
         val filteredAllergens = allergens.map { category ->
-            val filteredItems = category.items.filter { it.name.contains(query, ignoreCase = true) }
-                .toMutableList()
+            val filteredItems = category.items.filter { it.name.contains(query, ignoreCase = true) }.toMutableList()
             AllergenCategory(category.name, filteredItems)
         }.filter { it.items.isNotEmpty() }
 
         adapter.updateData(filteredAllergens)
-        // Expands view of allergen list when searching, so user can see results
         for (i in 0 until adapter.groupCount) {
             binding.allergenExpandableList.expandGroup(i)
         }
