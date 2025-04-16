@@ -32,6 +32,7 @@
         android:drawableStart="@drawable/search_icon"
         android:textSize="18sp"
         app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintBottom_toTopOf="@id/addCustomPrompt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -40,10 +41,10 @@
         android:id="@+id/addCustomPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:paddingTop="10dp"
-        android:text=""
+        android:layout_marginTop="50dp"
         android:fontFamily="@font/roboto_condensed_font"
+        android:padding="10dp"
+        android:text=" "
         android:textColor="@color/md_theme_primary"
         android:textSize="20sp"
         android:visibility="gone"
@@ -63,7 +64,7 @@
         android:divider="@android:color/transparent"
         android:dividerHeight="5dp"
         android:groupIndicator="@null"
-        app:layout_constraintTop_toBottomOf="@id/search_bar"
+        app:layout_constraintTop_toBottomOf="@id/addCustomPrompt"
         app:layout_constraintBottom_toTopOf="@id/saveButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
