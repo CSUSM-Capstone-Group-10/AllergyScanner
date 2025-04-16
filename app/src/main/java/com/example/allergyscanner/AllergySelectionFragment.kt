@@ -234,42 +234,6 @@ class AllergySelectionFragment : Fragment() {
             saveSelectedAllergens()
         }
 
-        // Set up Add Custom Allergen functionality
-        val customInput = view.findViewById<EditText>(R.id.customAllergenInput)
-        val addButton = view.findViewById<Button>(R.id.addCustomAllergenButton)
-
-        addButton.setOnClickListener {
-            val inputText = customInput.text.toString().trim()
-            if (inputText.isNotEmpty()) {
-                // Check if allergen already exists across all categories
-                val existsInAnyCategory = allergens.any { category ->
-                    category.items.any { it.name.equals(inputText, ignoreCase = true) }
-                }
-
-                if (!existsInAnyCategory) {
-                    val otherCategory = allergens.find { it.name == "Other" }
-                    otherCategory?.items?.add(AllergenItem(inputText))
-                    adapter.updateData(allergens)
-                    val index = allergens.indexOf(otherCategory)
-                    binding.allergenExpandableList.expandGroup(index)
-                    customInput.text.clear()
-                } else {
-                    // Select the matching allergen
-                    allergens.forEach { category ->
-                        category.items.find { it.name.equals(inputText, ignoreCase = true) }?.isSelected = true
-                    }
-                    adapter.updateData(allergens)
-                    Toast.makeText(
-                        requireContext(),
-                        "\"$inputText\" already exists and has been selected",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } else {
-                Toast.makeText(requireContext(), "Please enter a custom allergen", Toast.LENGTH_SHORT).show()
-            }
-        }
-
         // Search bar functionality
         val searchBar: EditText = view.findViewById(R.id.search_bar)
         searchBar.addTextChangedListener(object : TextWatcher {
@@ -329,7 +293,20 @@ class AllergySelectionFragment : Fragment() {
         }
     }
 
+    private fun showCustomAllergyOption(query: String) {
+        binding.addCustomPrompt.apply {
+            text = "Add \"$query\" as a custom allergen?"
+            visibility = View.VISIBLE
+            setOnClickListener {
+                addCustomAllergen(query)
+                visibility = View.GONE
+                binding.searchBar.text.clear()
+            }
+        }
+    }
+
     private fun filterAllergens(query: String) {
+        val trimmedQuery = query.trim()
         val filteredAllergens = allergens.map { category ->
             val filteredItems = category.items.filter { it.name.contains(query, ignoreCase = true) }.toMutableList()
             AllergenCategory(category.name, filteredItems)
@@ -338,6 +315,41 @@ class AllergySelectionFragment : Fragment() {
         adapter.updateData(filteredAllergens)
         for (i in 0 until adapter.groupCount) {
             binding.allergenExpandableList.expandGroup(i)
+        }
+
+        if (filteredAllergens.isEmpty() && trimmedQuery.isNotEmpty()) {//if no results were found from user search
+            showCustomAllergyOption(trimmedQuery) //show allergens
+        } else { //results found
+            binding.addCustomPrompt.visibility = View.GONE //hide custom allergen prompt
+        }
+    }
+
+    private fun addCustomAllergen(inputText: String) {
+        // Check if allergen already exists across all categories
+        val existsInAnyCategory = allergens.any { category ->
+            category.items.any { it.name.equals(inputText, ignoreCase = true) }
+        }
+        if (inputText.isNotEmpty()) {
+            if (!existsInAnyCategory) {
+                val otherCategory = allergens.find { it.name == "Other" }
+                otherCategory?.items?.add(AllergenItem(inputText, true))
+                adapter.updateData(allergens)
+                val index = allergens.indexOf(otherCategory)
+                binding.allergenExpandableList.expandGroup(index)
+                Toast.makeText(requireContext(), "\"$inputText\" added to custom allergens", Toast.LENGTH_SHORT).show()
+            } else {
+                // Select the matching allergen
+                allergens.forEach { category ->
+                    category.items.find { it.name.equals(inputText, ignoreCase = true) }?.isSelected = true
+                }
+                adapter.updateData(allergens)
+                //not really needed anymore, but will keep for rare situations
+                Toast.makeText(
+                    requireContext(),
+                    "\"$inputText\" already exists and has been selected",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 }

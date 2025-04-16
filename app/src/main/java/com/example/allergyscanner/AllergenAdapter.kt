@@ -34,7 +34,6 @@ class AllergenAdapter(
         categoryName.text = category.name
         categoryCheckbox.isChecked = category.isSelected
 
-        // ✅ Expand or collapse when clicking the category name
         categoryName.setOnClickListener {
             if (expandableListView.isGroupExpanded(groupPosition)) {
                 expandableListView.collapseGroup(groupPosition)
@@ -43,7 +42,6 @@ class AllergenAdapter(
             }
         }
 
-        // ✅ Selecting the checkbox selects/deselects all subitems
         categoryCheckbox.setOnClickListener {
             category.isSelected = categoryCheckbox.isChecked
             category.items.forEach { it.isSelected = category.isSelected }

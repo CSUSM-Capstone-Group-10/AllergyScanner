@@ -25,6 +25,6 @@
         android:layout_height="wrap_content"
         android:background="?android:selectableItemBackgroundBorderless"
         android:contentDescription="Delete"
-        android:src="@android:drawable/ic_delete"
+        android:src="@drawable/close_button_selector"
         android:visibility="gone" />
 </LinearLayout>
