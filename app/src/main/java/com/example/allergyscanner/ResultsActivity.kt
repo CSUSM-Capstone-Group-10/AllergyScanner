@@ -23,82 +23,55 @@ import java.util.Locale
 class ResultsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityResultsBinding
+    // Store these as class variables so they can be accessed throughout the activity
+    private var recognizedText: String? = null
+    private var croppedImageUri: String? = null
+    private var isFromHistory: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Setup toolbar
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressed()
+        }
+
         // --------------------------------------------------------------------
         // 1. Retrieve data from Intent
         // --------------------------------------------------------------------
-        val croppedImageUri = intent.getStringExtra("croppedImageUri")
-        val recognizedText = intent.getStringExtra("recognizedText")
-        // NEW: if this is "true", we skip re-saving to history
-        val isFromHistory = intent.getBooleanExtra("isFromHistory", false)
+        croppedImageUri = intent.getStringExtra("croppedImageUri")
+        recognizedText = intent.getStringExtra("recognizedText")
+        // If this is "true", we skip re-saving to history
+        isFromHistory = intent.getBooleanExtra("isFromHistory", false)
+
+        // Initialize the edit text field with the current recognized text
+        binding.editIngredientsField.setText(recognizedText)
 
         // --------------------------------------------------------------------
-        // 2. Display Cropped Image
+        // 2. Display Cropped Image and Process Text
         // --------------------------------------------------------------------
         if (!croppedImageUri.isNullOrEmpty()) {
             val imageUri = Uri.parse(croppedImageUri)
             binding.resultImage.setImageURI(imageUri)
-            //apply visibility to image on results page
+            // Apply visibility to image on results page
             binding.resultImage.visibility = android.view.View.VISIBLE
-            //removes noPhotoWarning in case it was visible
+            // Removes noPhotoWarning in case it was visible
             binding.noPhotoWarning.visibility = android.view.View.GONE
-        // --------------------------------------------------------------------
-        // 3. Display recognized text, or let user know if none found
-        // --------------------------------------------------------------------
-            if (recognizedText.isNullOrEmpty()) {
-                binding.detectedTextView.text = "No text recognized."
-                binding.detectedTextView.visibility = android.view.View.VISIBLE
-            } else {
-                binding.detectedTextView.text = "\n$recognizedText"
-                binding.detectedTextView.visibility = android.view.View.VISIBLE
-                binding.detectedAllergensTitle.visibility = android.view.View.VISIBLE
-            }
-        // --------------------------------------------------------------------
-        // 4. Load and display user-selected allergens
-        // --------------------------------------------------------------------
-            val selectedAllergens = SelectionManager.loadSelections(this)
 
-            // Check if no allergens were selected
-            if (selectedAllergens.isEmpty()) {
-                binding.allergenWarning.visibility = android.view.View.GONE
+            // Show the ingredients section
+            showIngredientsSection()
 
-            }
-            else {
-                // --------------------------------------------------------------------
-                // 5. Compare recognized text to allergens (simple substring check)
-                //    This also works for history items because recognizedText is set
-                //    from the intent, whether new or old.
-                // --------------------------------------------------------------------
-                val foundAllergens = mutableListOf<String>()
-                if (!recognizedText.isNullOrEmpty()) {
-                    for (allergen in selectedAllergens) {
-                        if (recognizedText.contains(allergen, ignoreCase = true)) {
-                            foundAllergens.add(allergen)
-                        }
-                    }
-                }
-                // --------------------------------------------------------------------
-                // 6. Show warning if we found anything
-                // --------------------------------------------------------------------
-                if (foundAllergens.isNotEmpty()) {
-                    binding.allergenWarning.text =
-                        "${foundAllergens.joinToString("\n")}"
-                    binding.allergenWarning.visibility = android.view.View.VISIBLE
-                    updateAllergyStatusBubble(foundAllergens)
-                } else {
-                    binding.allergenWarning.text = "No selected allergens found in the image."
-                    binding.allergenWarning.visibility = android.view.View.VISIBLE
-                    updateAllergyStatusBubble(emptyList())
-                }
-            }
+            // Process and check for allergens
+            processRecognizedText()
+
             // --------------------------------------------------------------------
-            // 7. Save this scan to history ONLY if it's a brand-new scan
-            //    (not loaded from history).
+            // Save this scan to history ONLY if it's a brand-new scan
+            // (not loaded from history).
             // --------------------------------------------------------------------
             if (!isFromHistory) {
                 saveScanToHistory(
@@ -106,11 +79,8 @@ class ResultsActivity : AppCompatActivity() {
                     recognized = recognizedText ?: ""
                 )
             }
-        }
-
-        //No photo has been taken, display appropriate errors
-        else {
-            //show no photo taken warning
+        } else {
+            // No photo has been taken, display appropriate errors
             binding.noPhotoWarning.text = "No photo to detect!"
             binding.noPhotoWarning.visibility = android.view.View.VISIBLE
             Toast.makeText(
@@ -122,38 +92,63 @@ class ResultsActivity : AppCompatActivity() {
                 show()
             }
 
-            // If no image, hide allergen warning
+            // If no image, hide the ingredients section
+            hideIngredientsSection()
+
+            // Hide allergen warning
             binding.allergenWarning.visibility = android.view.View.GONE
+            binding.allergyStatusBubble.visibility = android.view.View.GONE
         }
 
+        // --------------------------------------------------------------------
+        // Set up Save button for ingredient edits
+        // --------------------------------------------------------------------
+        binding.saveIngredientsBtn.setOnClickListener {
+            // Update the recognized text with the edited content
+            recognizedText = binding.editIngredientsField.text.toString()
+
+            // Process the updated text to find allergens
+            processRecognizedText()
+
+            // Always save to history, regardless of whether it's from history or not
+            // The saveScanToHistory method will handle updating vs creating new entries
+            saveScanToHistory(
+                croppedUri = croppedImageUri ?: "",
+                recognized = recognizedText ?: ""
+            )
+
+            // Show confirmation to the user
+            Toast.makeText(
+                this,
+                if (isFromHistory) "History updated with edited ingredients" else "Ingredients updated and saved to history",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
 
         // --------------------------------------------------------------------
-        // 8. Show history bottom sheet if user taps the history icon
+        // Show history bottom sheet if user taps the history icon
         // --------------------------------------------------------------------
         binding.historyIcon.setOnClickListener {
             showHistoryBottomSheet()
         }
 
         // --------------------------------------------------------------------
-        // 9. Navigation buttons
+        // Navigation buttons
         // --------------------------------------------------------------------
         val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottomNav)
         bottomNavigationView.selectedItemId = R.id.navResults
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navAllergens -> {
-                    // Handle "Allergens" selection
                     startActivity(Intent(this, MainActivity::class.java))
                     true
                 }
                 R.id.navCamera -> {
-                    // Handle "Camera" selection
                     startActivity(Intent(this, CameraActivity::class.java))
                     true
                 }
                 R.id.navResults -> {
-                    // Handle "Results" selection
-                    startActivity(Intent(this, ResultsActivity::class.java))
+                    // Already on this screen, do nothing
                     true
                 }
                 else -> false
@@ -162,7 +157,70 @@ class ResultsActivity : AppCompatActivity() {
     }
 
     /**
-     * Saves the current scan to SharedPreferences, retaining only the last 10.
+     * Show the ingredients section (title, edit field, save button)
+     */
+    private fun showIngredientsSection() {
+        binding.ingredientsTitle.visibility = android.view.View.VISIBLE
+        binding.editIngredientsField.visibility = android.view.View.VISIBLE
+        binding.saveIngredientsBtn.visibility = android.view.View.VISIBLE
+    }
+
+    /**
+     * Hide the ingredients section (title, edit field, save button)
+     */
+    private fun hideIngredientsSection() {
+        binding.ingredientsTitle.visibility = android.view.View.GONE
+        binding.editIngredientsField.visibility = android.view.View.GONE
+        binding.saveIngredientsBtn.visibility = android.view.View.GONE
+    }
+
+    /**
+     * Process the recognized text to check for allergens and update UI accordingly
+     * This is a new method to centralize the logic that was previously in onCreate
+     */
+    private fun processRecognizedText() {
+        // Make sure the edit field is visible if we have recognized text
+        if (recognizedText.isNullOrEmpty()) {
+            // Set a hint instead of empty text
+            binding.editIngredientsField.hint = "Add ingredients manually here"
+        }
+
+        // Load and display user-selected allergens
+        val selectedAllergens = SelectionManager.loadSelections(this)
+
+        // Check if no allergens were selected
+        if (selectedAllergens.isEmpty()) {
+            binding.detectedAllergensTitle.visibility = android.view.View.GONE
+            binding.allergenWarning.visibility = android.view.View.GONE
+            binding.allergyStatusBubble.visibility = android.view.View.GONE
+        } else {
+            binding.detectedAllergensTitle.visibility = android.view.View.VISIBLE
+
+            // Compare recognized text to allergens (simple substring check)
+            val foundAllergens = mutableListOf<String>()
+            if (!recognizedText.isNullOrEmpty()) {
+                for (allergen in selectedAllergens) {
+                    if (recognizedText!!.contains(allergen, ignoreCase = true)) {
+                        foundAllergens.add(allergen)
+                    }
+                }
+            }
+
+            // Show warning if we found any allergens
+            if (foundAllergens.isNotEmpty()) {
+                binding.allergenWarning.text = foundAllergens.joinToString("\n")
+                binding.allergenWarning.visibility = android.view.View.VISIBLE
+                updateAllergyStatusBubble(foundAllergens)
+            } else {
+                binding.allergenWarning.text = "No selected allergens found in the image."
+                binding.allergenWarning.visibility = android.view.View.VISIBLE
+                updateAllergyStatusBubble(emptyList())
+            }
+        }
+    }
+
+    /**
+     * Saves the current scan to SharedPreferences, overriding an existing entry if from history
      */
     private fun saveScanToHistory(croppedUri: String, recognized: String) {
         try {
@@ -173,16 +231,40 @@ class ResultsActivity : AppCompatActivity() {
             val type = object : TypeToken<MutableList<ScanHistoryItem>>() {}.type
             val historyList: MutableList<ScanHistoryItem> = Gson().fromJson(oldJson, type)
 
-            Log.d("saveScanToHistory", "Saving image: $croppedUri, text: $recognized")
-            // Build new item
-            val newItem = ScanHistoryItem(
-                dateTime = System.currentTimeMillis(),
-                imageUri = croppedUri,
-                recognizedText = recognized
-            )
-
-            // Insert at front
-            historyList.add(0, newItem)
+            if (isFromHistory) {
+                // Try to find and update the existing entry with matching image URI
+                val index = historyList.indexOfFirst { it.imageUri == croppedUri }
+                if (index != -1) {
+                    // Found the entry, update just the text but keep the original timestamp
+                    val existingItem = historyList[index]
+                    val updatedItem = ScanHistoryItem(
+                        dateTime = existingItem.dateTime,
+                        imageUri = existingItem.imageUri,
+                        recognizedText = recognized
+                    )
+                    historyList[index] = updatedItem
+                    Log.d("saveScanToHistory", "Updated existing entry at index $index with new text")
+                } else {
+                    // Couldn't find matching entry, unusual but add as new
+                    val newItem = ScanHistoryItem(
+                        dateTime = System.currentTimeMillis(),
+                        imageUri = croppedUri,
+                        recognizedText = recognized
+                    )
+                    historyList.add(0, newItem)
+                    Log.d("saveScanToHistory", "Couldn't find history entry to update, added as new")
+                }
+            } else {
+                // This is a new scan, add as new entry
+                Log.d("saveScanToHistory", "Saving new image: $croppedUri, text: $recognized")
+                val newItem = ScanHistoryItem(
+                    dateTime = System.currentTimeMillis(),
+                    imageUri = croppedUri,
+                    recognizedText = recognized
+                )
+                // Insert at front
+                historyList.add(0, newItem)
+            }
 
             // Keep only up to 10 items
             while (historyList.size > 10) {
@@ -196,7 +278,6 @@ class ResultsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("ResultsActivity", "Error saving scan to history", e)
         }
-
     }
 
     /**
