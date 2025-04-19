@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -132,6 +133,21 @@ class ResultsActivity : AppCompatActivity() {
             showHistoryBottomSheet()
         }
 
+
+        //
+        binding.ingredientsTitle.setOnClickListener()
+        {
+            if(binding.editIngredientsField.visibility == View.GONE)
+            {
+                binding.editIngredientsField.visibility = View.VISIBLE
+            }
+            else
+            {
+                binding.editIngredientsField.visibility = View.GONE
+            }
+
+        }
+
         // --------------------------------------------------------------------
         // Navigation buttons
         // --------------------------------------------------------------------
@@ -161,7 +177,7 @@ class ResultsActivity : AppCompatActivity() {
      */
     private fun showIngredientsSection() {
         binding.ingredientsTitle.visibility = android.view.View.VISIBLE
-        binding.editIngredientsField.visibility = android.view.View.VISIBLE
+        //binding.editIngredientsField.visibility = android.view.View.VISIBLE
         binding.saveIngredientsBtn.visibility = android.view.View.VISIBLE
     }
 
@@ -173,6 +189,7 @@ class ResultsActivity : AppCompatActivity() {
         binding.editIngredientsField.visibility = android.view.View.GONE
         binding.saveIngredientsBtn.visibility = android.view.View.GONE
     }
+
 
     /**
      * Process the recognized text to check for allergens and update UI accordingly
