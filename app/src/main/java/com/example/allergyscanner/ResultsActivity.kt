@@ -134,17 +134,20 @@ class ResultsActivity : AppCompatActivity() {
         }
 
 
-        //
+        // Toggle the raw text being visible on the results page
         binding.toggleResultsText.setOnClickListener()
         {
             if(binding.editIngredientsField.visibility == View.GONE)
             {
                 binding.editIngredientsField.visibility = View.VISIBLE
+                binding.saveIngredientsBtn.visibility = View.VISIBLE
             }
             else
             {
                 binding.editIngredientsField.visibility = View.GONE
+                binding.saveIngredientsBtn.visibility = View.GONE
             }
+            // Flip arrow icon every time it's toggled
             binding.ingredientsArrow.rotation += 180
 
         }
@@ -179,8 +182,9 @@ class ResultsActivity : AppCompatActivity() {
      */
     private fun showIngredientsSection() {
         binding.ingredientsTitle.visibility = android.view.View.VISIBLE
+        binding.ingredientsArrow.visibility = View.VISIBLE
         //binding.editIngredientsField.visibility = android.view.View.VISIBLE
-        binding.saveIngredientsBtn.visibility = android.view.View.VISIBLE
+        //binding.saveIngredientsBtn.visibility = android.view.View.VISIBLE
     }
 
     /**

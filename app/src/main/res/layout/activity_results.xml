@@ -112,6 +112,7 @@
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="15dp"
                     android:src="@drawable/down_arrow"
+                    android:visibility="gone"
                     app:tint="@color/md_theme_primary" />
             </LinearLayout>
             
