@@ -90,6 +90,7 @@
 
             <!-- Removed the detectedTextView and kept only the editable field -->
             <LinearLayout
+                android:id="@+id/toggleResultsText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 

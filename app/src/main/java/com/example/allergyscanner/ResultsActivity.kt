@@ -135,7 +135,7 @@ class ResultsActivity : AppCompatActivity() {
 
 
         //
-        binding.ingredientsTitle.setOnClickListener()
+        binding.toggleResultsText.setOnClickListener()
         {
             if(binding.editIngredientsField.visibility == View.GONE)
             {
@@ -145,8 +145,10 @@ class ResultsActivity : AppCompatActivity() {
             {
                 binding.editIngredientsField.visibility = View.GONE
             }
+            binding.ingredientsArrow.rotation += 180
 
         }
+
 
         // --------------------------------------------------------------------
         // Navigation buttons
