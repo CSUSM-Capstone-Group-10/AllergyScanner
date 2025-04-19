@@ -141,11 +141,13 @@ class ResultsActivity : AppCompatActivity() {
             {
                 binding.editIngredientsField.visibility = View.VISIBLE
                 binding.saveIngredientsBtn.visibility = View.VISIBLE
+                binding.editIngredientsFieldHint.visibility = View.VISIBLE
             }
             else
             {
                 binding.editIngredientsField.visibility = View.GONE
                 binding.saveIngredientsBtn.visibility = View.GONE
+                binding.editIngredientsFieldHint.visibility = View.GONE
             }
             // Flip arrow icon every time it's toggled
             binding.ingredientsArrow.rotation += 180

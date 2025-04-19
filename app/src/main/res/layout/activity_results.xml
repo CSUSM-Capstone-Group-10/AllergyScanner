@@ -116,20 +116,30 @@
                     app:tint="@color/md_theme_primary" />
             </LinearLayout>
             
-
-            <EditText
-                android:id="@+id/editIngredientsField"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editIngredientsFieldHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:fontFamily="@font/roboto_regular"
-                android:gravity="top|start"
-                android:hint="Add Ingredients Here"
-                android:inputType="textMultiLine"
-                android:minLines="3"
-                android:padding="12dp"
-                android:textSize="16sp"
-                android:visibility="gone" /> <!-- Hide until dropdown clicked -->
+                android:hint="Edit the raw detected text below:"
+                android:visibility="gone"
+
+                >
+                <EditText
+                    android:id="@+id/editIngredientsField"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/roboto_regular"
+                    android:gravity="top|start"
+                    android:hint="Add Ingredients Here"
+                    android:inputType="textMultiLine"
+                    android:minLines="3"
+                    android:padding="12dp"
+                    android:textSize="16sp"
+                    android:visibility="gone" /> <!-- Hide until dropdown clicked -->
+
+            </com.google.android.material.textfield.TextInputLayout>
+
 
             <Button
                 android:id="@+id/saveIngredientsBtn"
