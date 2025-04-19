@@ -16,7 +16,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tabGravity="fill"
-        app:tabMode="fixed" />
+        app:tabMode="fixed"
+        android:layout_marginTop="16dp"/>
 
     <!-- ViewPager to host the fragments -->
     <androidx.viewpager2.widget.ViewPager2

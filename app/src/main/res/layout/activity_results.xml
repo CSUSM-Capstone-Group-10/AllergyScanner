@@ -120,7 +120,7 @@
                 android:layout_gravity="end"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:text="Save and Check Allergens"
+                android:text="Save Result to History"
                 android:textColor="@android:color/white" />
 
             <!-- Horizontal line separator -->
