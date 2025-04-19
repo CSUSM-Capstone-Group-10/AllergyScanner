@@ -138,8 +138,9 @@
                 android:layout_gravity="end"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:text="Save Result to History"
-                android:textColor="@android:color/white" />
+                android:text="Save Edited Detected Text to History"
+                android:textColor="@android:color/white"
+                android:visibility="gone"/>
 
             <!-- Horizontal line separator -->
             <View
