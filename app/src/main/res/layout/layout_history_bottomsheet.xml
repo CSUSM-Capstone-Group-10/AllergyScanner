@@ -1,21 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@android:color/white"
+    android:paddingBottom="16dp">
 
+    <!-- Handle for dragging the sheet -->
+    <View
+        android:layout_width="32dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="#CCCCCC" />
+
+    <!-- Title -->
     <TextView
+        android:id="@+id/history_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Scan History"
-        android:textSize="18sp"
         android:gravity="center"
-        android:paddingBottom="8dp"/>
+        android:paddingVertical="16dp"
+        android:text="Scan History"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_primary" />
 
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0" />
+
+    <!-- No history message (shown when history is empty) -->
+    <TextView
+        android:id="@+id/no_history_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="24dp"
+        android:text="No scan history found. Take a photo to start!"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+    <!-- RecyclerView for history items -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/historyRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:nestedScrollingEnabled="true"
+        android:overScrollMode="never"
+        android:padding="8dp" />
+
 </LinearLayout>

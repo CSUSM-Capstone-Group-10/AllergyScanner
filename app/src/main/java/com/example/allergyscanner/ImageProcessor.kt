@@ -50,7 +50,7 @@ class ImageProcessor(private val context: Context)
                 Log.d(TAG, "No text regions detected, attempting to extract text from entire image")
                 val fallbackText = EasyocrRecognizer.runModelFallback(detResults.second)
                 Log.d(TAG, "Text extracted from full image: $fallbackText")
-                return "Full image: $fallbackText"
+                return "$fallbackText"
             }
 
             // Assuming now that there are detected text regions, attempt to recognize text in each detected region

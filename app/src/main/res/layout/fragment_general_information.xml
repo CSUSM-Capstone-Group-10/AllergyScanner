@@ -531,7 +531,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="#e8f0e6"
             app:cardCornerRadius="8dp"
             app:cardElevation="2dp">
 
@@ -584,7 +583,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Disclaimer"
-                    android:textColor="#546e7a"
+                    android:textColor="#3c5a36"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
