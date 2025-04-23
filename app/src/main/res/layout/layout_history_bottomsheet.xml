@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@android:color/white"
+    android:background="@color/md_theme_background"
     android:paddingBottom="16dp">
 
     <!-- Handle for dragging the sheet -->
@@ -14,7 +14,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp"
-        android:background="#CCCCCC" />
+        android:background="@color/md_theme_background" />
 
     <!-- Title -->
     <TextView
