@@ -1,4 +1,5 @@
-# 🤧 AllergyScanner
+<img src="assets/Banner.png" alt="Allergen Scanner Banner" width="auto" height="auto"/>
+
 
 AllergyScanner is an Android mobile application that helps users identify food allergens in product ingredient lists using image scanning and customizable allergen preferences. Designed with accessibility and ease of use in mind, this app empowers individuals with food allergies to make informed decisions and stay safe.
 
