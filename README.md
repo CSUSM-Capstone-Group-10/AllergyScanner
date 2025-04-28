@@ -28,15 +28,8 @@ This project follows the **Model-View-Controller (MVC)** architecture:
 ---
 
 ## 📸 Screenshots
-
-### Allergen Selection
-<img src="assets/screenshot1.jpg" alt="Allergen Selection" width="300" height="auto"/>
-
-### Camera View
-> <img src="assets/screenshot2.jpg" alt="Camera View" width="300" height="auto"/>
-
-### Scan Results
-> <img src="assets/screenshot3.jpg" alt="Scan Results" width="300" height="auto"/>
+|![](assets/screenshot1.jpg)<br>Allergen Selection|![](assets/screenshot2.jpg)<br>Camera View|![](assets/screenshot3.jpg)<br>Scan Results|
+|:-:|:-:|:-:|
 
 
 ---
