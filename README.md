@@ -68,10 +68,10 @@ This project follows the **Model-View-Controller (MVC)** architecture:
 
 ## 👥 Authors
 
-- Bryce Walker
-- Josue Navarete
-- Lucas Birkenstock
-- Armando Landeros
+- [Bryce Walker](http://www.linkedin.com/in/brycewalker-bw)![Linkedin](https://i.sstatic.net/gVE0j.png)
+- [Josue Navarete](www.linkedin.com/in/josue-navarrete-jbn)![Linkedin](https://i.sstatic.net/gVE0j.png)
+- [Lucas Brikenstock](https://www.linkedin.com/in/lucas-birkenstock/)![Linkedin](https://i.sstatic.net/gVE0j.png)
+- [Armando Landeros](http://linkedin.com/in/armando-landeros-40ab1b277)![Linkedin](https://i.sstatic.net/gVE0j.png)
 
 ---
 
